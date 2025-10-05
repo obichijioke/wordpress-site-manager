@@ -24,3 +24,26 @@ dist-ssr
 *.sw?
 .vite
 /generated/prisma
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+data/
+uploads/
+
+# Prisma
+prisma/data/
+
+# Build artifacts
+build/
+.cache/
+
+# OS files
+Thumbs.db
