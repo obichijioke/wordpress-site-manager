@@ -5,6 +5,8 @@ import { WordPressPost, WordPressCategory, WordPressTag, PostFormData, PostFilte
 import RichTextEditor from '../components/RichTextEditor'
 import TagsInput from '../components/TagsInput'
 import FeaturedImageUpload from '../components/FeaturedImageUpload'
+import AIAssistantPanel from '../components/ai/AIAssistantPanel'
+import TitleSuggestionsModal from '../components/ai/TitleSuggestionsModal'
 
 export default function Content() {
   const [sites, setSites] = useState<Site[]>([])
@@ -46,6 +48,10 @@ export default function Content() {
   })
   const [wordCount, setWordCount] = useState(0)
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null)
+
+  // AI Assistant state
+  const [showTitleSuggestions, setShowTitleSuggestions] = useState(false)
+  const [titleSuggestions, setTitleSuggestions] = useState<string[]>([])
 
   useEffect(() => {
     loadSites()
@@ -533,7 +539,8 @@ export default function Content() {
 
       {/* WordPress Post Editor */}
       {showEditor && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <>
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="p-6 bg-gray-50 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -732,7 +739,27 @@ export default function Content() {
               )}
             </div>
           </form>
-        </div>
+          </div>
+
+          {/* AI Assistant Panel */}
+          <AIAssistantPanel
+            content={formData.content}
+            onContentUpdate={(content) => setFormData({ ...formData, content })}
+            onExcerptUpdate={(excerpt) => setFormData({ ...formData, excerpt })}
+            onTitleSuggestions={(titles) => {
+              setTitleSuggestions(titles)
+              setShowTitleSuggestions(true)
+            }}
+            disabled={formLoading}
+          />
+
+          <TitleSuggestionsModal
+            isOpen={showTitleSuggestions}
+            onClose={() => setShowTitleSuggestions(false)}
+            titles={titleSuggestions}
+            onSelect={(title) => setFormData({ ...formData, title })}
+          />
+        </>
       )}
 
       {/* Filters and Search */}

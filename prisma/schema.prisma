@@ -22,6 +22,9 @@ model User {
   // Relations
   sites         Site[]
   contentDrafts ContentDraft[]
+  aiSettings    AISettings?
+  aiUsage       AIUsage[]
+  customModels  CustomModel[]
 
   @@map("users")
 }
@@ -106,6 +109,76 @@ model Category {
 
   @@unique([siteId, wpCategoryId])
   @@map("categories")
+}
+
+// AI Models
+model AISettings {
+  id                  String   @id @default(cuid())
+  userId              String   @unique @map("user_id")
+  openaiApiKey        String?  @map("openai_api_key") // Encrypted
+  anthropicApiKey     String?  @map("anthropic_api_key") // Encrypted
+  defaultProvider     String   @default("openai") @map("default_provider") // 'openai' or 'anthropic'
+  monthlyTokenLimit   Int      @default(100000) @map("monthly_token_limit")
+
+  // Model selections for each feature
+  enhanceModel        String   @default("gpt-3.5-turbo") @map("enhance_model")
+  generateModel       String   @default("gpt-4-turbo") @map("generate_model")
+  summarizeModel      String   @default("gpt-3.5-turbo") @map("summarize_model")
+  seoMetaModel        String   @default("gpt-3.5-turbo") @map("seo_meta_model")
+  titlesModel         String   @default("gpt-3.5-turbo") @map("titles_model")
+  toneModel           String   @default("gpt-3.5-turbo") @map("tone_model")
+  keywordsModel       String   @default("gpt-3.5-turbo") @map("keywords_model")
+  translateModel      String   @default("gpt-4-turbo") @map("translate_model")
+  altTextModel        String   @default("gpt-3.5-turbo") @map("alt_text_model")
+  outlineModel        String   @default("gpt-4-turbo") @map("outline_model")
+
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_settings")
+}
+
+model AIUsage {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  feature       String   // 'enhance', 'generate', 'summarize', etc.
+  provider      String   // 'openai', 'anthropic', 'custom'
+  model         String   // 'gpt-3.5-turbo', 'claude-3-sonnet', etc.
+  tokensUsed    Int      @map("tokens_used")
+  cost          Float    // Cost in USD
+  success       Boolean  @default(true)
+  errorMessage  String?  @map("error_message")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ai_usage")
+}
+
+model CustomModel {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  name          String   // Display name (e.g., "My Custom GPT")
+  identifier    String   // Model identifier (e.g., "custom-gpt-4")
+  provider      String   @default("custom") // 'custom', 'openai', 'anthropic'
+  endpoint      String   // API endpoint URL
+  apiKey        String   @map("api_key") // Encrypted
+  temperature   Float    @default(0.7)
+  maxTokens     Int      @default(2000) @map("max_tokens")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, identifier])
+  @@map("custom_models")
 }
 
 // Enums

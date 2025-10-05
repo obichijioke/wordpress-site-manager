@@ -16,6 +16,8 @@ import sitesRoutes from './routes/sites.js'
 import contentRoutes from './routes/content.js'
 import categoriesRoutes from './routes/categories.js'
 import mediaRoutes from './routes/media.js'
+import aiRoutes from './routes/ai.js'
+import aiSettingsRoutes from './routes/ai-settings.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -41,6 +43,8 @@ app.use('/api/sites', sitesRoutes)
 app.use('/api/content', contentRoutes)
 app.use('/api/categories', categoriesRoutes)
 app.use('/api/media', mediaRoutes)
+app.use('/api/ai', aiRoutes)
+app.use('/api/ai-settings', aiSettingsRoutes)
 
 /**
  * health

@@ -2,6 +2,7 @@
  * API client utilities for WordPress Dashboard
  */
 
+// API base URL - includes /api prefix
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 interface ApiResponse<T = any> {

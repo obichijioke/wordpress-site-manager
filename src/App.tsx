@@ -7,6 +7,7 @@ import Sites from './pages/Sites'
 import Content from './pages/Content'
 import Categories from './pages/Categories'
 import Media from './pages/Media'
+import AISettings from './pages/AISettings'
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -43,10 +44,7 @@ function AppContent() {
       case 'media':
         return <Media />
       case 'settings':
-        return <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-          <p className="text-gray-600 mt-2">Coming soon...</p>
-        </div>
+        return <AISettings />
       default:
         return <Dashboard />
     }
