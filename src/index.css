@@ -23,6 +23,80 @@
   outline-offset: 2px;
 }
 
+/* Image styling in editor */
+.editor-image {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.editor-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  cursor: default;
+}
+
+/* Code block styling */
+.lexical-editor pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.lexical-editor code {
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+}
+
+/* Quote styling */
+.lexical-editor blockquote {
+  margin: 12px 0;
+  padding-left: 16px;
+}
+
+/* List styling */
+.lexical-editor ul,
+.lexical-editor ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.lexical-editor li {
+  margin: 4px 0;
+}
+
+/* Heading styling */
+.lexical-editor h1 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.lexical-editor h2 {
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+
+.lexical-editor h3 {
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+/* Paragraph spacing */
+.lexical-editor p {
+  margin: 8px 0;
+}
+
+/* Disabled toolbar buttons */
+.lexical-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Responsive toolbar */
 @media (max-width: 768px) {
   .lexical-toolbar {

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Editor Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        h2 {
+            color: #333;
+        }
+        .sample-html {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .success {
+            color: #4caf50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 WYSIWYG Editor Image Enhancement Test</h1>
+    
+    <div class="test-section">
+        <h2>✅ Implementation Complete</h2>
+        <p>The WYSIWYG editor has been enhanced with full image support!</p>
+        <ul>
+            <li>✓ Custom ImageNode component created</li>
+            <li>✓ RichTextEditor updated with image support</li>
+            <li>✓ Image insertion button added to toolbar</li>
+            <li>✓ CSS styling for proper image display</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 Test Instructions</h2>
+        <div class="instructions">
+            <h3>To test the image functionality:</h3>
+            <ol>
+                <li>Start the development server: <code>npm run dev</code></li>
+                <li>Navigate to the Content page</li>
+                <li>Select a WordPress site</li>
+                <li>Click "Edit" on a post that contains images</li>
+                <li>Verify that inline images appear in the editor</li>
+                <li>Try inserting a new image using the Image button (📷) in the toolbar</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Sample WordPress HTML with Images</h2>
+        <p>Here's an example of WordPress post HTML that should now display correctly:</p>
+        <div class="sample-html">
+            <code>
+&lt;p&gt;This is a sample WordPress post with an inline image.&lt;/p&gt;
+
+&lt;img src="https://example.com/image.jpg" 
+     alt="Sample Image" 
+     width="600" 
+     height="400" 
+     class="aligncenter" /&gt;
+
+&lt;p&gt;The image above should now display in the editor!&lt;/p&gt;
+
+&lt;p&gt;You can also have multiple images:&lt;/p&gt;
+
+&lt;img src="https://example.com/image2.jpg" 
+     alt="Another Image" 
+     width="400" 
+     height="300" /&gt;
+
+&lt;p&gt;All images will be properly rendered and editable.&lt;/p&gt;
+            </code>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 What to Look For</h2>
+        <ul>
+            <li><strong>Image Display:</strong> Images from WordPress posts should appear inline in the editor</li>
+            <li><strong>Image Attributes:</strong> Width, height, alt text, and classes should be preserved</li>
+            <li><strong>Responsive Sizing:</strong> Images should scale to fit the editor width (max 800px)</li>
+            <li><strong>Image Insertion:</strong> The toolbar should have an image button (📷)</li>
+            <li><strong>HTML Output:</strong> Saved content should contain proper &lt;img&gt; tags</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Toolbar Features</h2>
+        <p>The editor toolbar now includes:</p>
+        <ul>
+            <li><strong>Bold</strong> - Make text bold</li>
+            <li><strong>Italic</strong> - Make text italic</li>
+            <li><strong>Underline</strong> - Underline text</li>
+            <li><strong>Strikethrough</strong> - Strike through text</li>
+            <li><strong>Heading 1 & 2</strong> - Add headings</li>
+            <li><strong>Lists</strong> - Bullet and numbered lists</li>
+            <li><strong>Quote</strong> - Block quotes</li>
+            <li><strong>Code</strong> - Code blocks</li>
+            <li><strong class="success">📷 Image</strong> - Insert images (NEW!)</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Next Steps</h2>
+        <p>After testing, you can enhance the image functionality further:</p>
+        <ul>
+            <li>Add image upload capability</li>
+            <li>Implement image resizing with drag handles</li>
+            <li>Add image alignment options (left, center, right)</li>
+            <li>Support for image captions</li>
+            <li>Integration with WordPress media library</li>
+            <li>Drag & drop image upload</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📚 Documentation</h2>
+        <p>For detailed technical information, see:</p>
+        <ul>
+            <li><code>WYSIWYG_IMAGE_ENHANCEMENT.md</code> - Complete implementation guide</li>
+            <li><code>src/components/ImageNode.tsx</code> - Custom image node implementation</li>
+            <li><code>src/components/RichTextEditor.tsx</code> - Enhanced editor component</li>
+        </ul>
+    </div>
+
+    <div class="test-section" style="background: #f0f9ff; border-color: #0ea5e9;">
+        <h2>✨ Summary</h2>
+        <p class="success">The WYSIWYG editor now fully supports inline images!</p>
+        <p>WordPress posts with images will display correctly in the editor, and users can insert new images using the toolbar button. All image attributes are preserved when saving content back to WordPress.</p>
+    </div>
+</body>
+</html>
+
