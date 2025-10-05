@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  passwordHash String  @map("password_hash")
+  name        String
+  role        UserRole @default(SITE_MANAGER)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  sites         Site[]
+  contentDrafts ContentDraft[]
+
+  @@map("users")
+}
+
+model Site {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  name             String
+  url              String
+  wpUsername       String    @map("wp_username")
+  wpPasswordHash   String    @map("wp_password_hash")
+  healthStatus     String    @default("{}") @map("health_status")
+  lastSync         DateTime? @map("last_sync")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentDrafts ContentDraft[]
+  contentSync   ContentSync[]
+  categories    Category[]
+
+  @@map("sites")
+}
+
+model ContentDraft {
+  id             String        @id @default(cuid())
+  userId         String        @map("user_id")
+  siteId         String        @map("site_id")
+  type           ContentType
+  title          String
+  content        String?
+  excerpt        String?
+  categoryId     String?       @map("category_id")
+  featuredImage  String?       @map("featured_image")
+  tags           String?
+  metadata       String        @default("{}")
+  status         ContentStatus @default(DRAFT)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site     Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id])
+
+  @@map("content_drafts")
+}
+
+model ContentSync {
+  id         String      @id @default(cuid())
+  siteId     String      @map("site_id")
+  wpPostId   String      @map("wp_post_id")
+  type       ContentType
+  title      String
+  categories String      @default("[]")
+  wpModified DateTime?   @map("wp_modified")
+  lastSync   DateTime    @default(now()) @map("last_sync")
+
+  // Relations
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, wpPostId])
+  @@map("content_sync")
+}
+
+model Category {
+  id           String    @id @default(cuid())
+  siteId       String    @map("site_id")
+  wpCategoryId String    @map("wp_category_id")
+  name         String
+  slug         String
+  description  String?
+  parentId     String?   @map("parent_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  site          Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  parent        Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children      Category[]     @relation("CategoryHierarchy")
+  contentDrafts ContentDraft[]
+
+  @@unique([siteId, wpCategoryId])
+  @@map("categories")
+}
+
+// Enums
+enum UserRole {
+  SITE_MANAGER
+  CONTENT_EDITOR
+  VIEWER
+}
+
+enum ContentType {
+  POST
+  PAGE
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
