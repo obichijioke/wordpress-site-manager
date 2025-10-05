@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/Layout'
 import LoginPage from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -16,8 +17,8 @@ function AppContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
       </div>
     )
   }
@@ -59,8 +60,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

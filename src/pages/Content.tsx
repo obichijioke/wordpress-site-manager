@@ -477,14 +477,14 @@ export default function Content() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">WordPress Posts</h1>
-          <p className="text-gray-600">Create and manage posts directly in your WordPress site</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">WordPress Posts</h1>
+          <p className="text-gray-600 dark:text-gray-300">Create and manage posts directly in your WordPress site</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleRefresh}
             disabled={!selectedSite || refreshing}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 disabled:opacity-50 flex items-center gap-2"
+            className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center gap-2 transition-colors"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -492,7 +492,7 @@ export default function Content() {
           <button
             onClick={() => setShowEditor(true)}
             disabled={!selectedSite}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
+            className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:opacity-50 flex items-center gap-2 transition-colors"
           >
             <Plus className="h-4 w-4" />
             New Post
@@ -501,16 +501,16 @@ export default function Content() {
       </div>
 
       {/* Site Selector */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               WordPress Site
             </label>
             <select
               value={selectedSite}
               onChange={(e) => setSelectedSite(e.target.value)}
-              className="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full md:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
             >
               {sites.map((site) => (
                 <option key={site.id} value={site.id}>
@@ -520,7 +520,7 @@ export default function Content() {
             </select>
           </div>
           {selectedSite && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-4">
                 <span>Total: {pagination.total} posts</span>
                 <span>Page {pagination.currentPage} of {pagination.totalPages}</span>
@@ -532,7 +532,7 @@ export default function Content() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
           <div className="whitespace-pre-line">{error}</div>
         </div>
       )}
@@ -540,10 +540,10 @@ export default function Content() {
       {/* WordPress Post Editor */}
       {showEditor && (
         <>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="p-6 bg-gray-50 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="p-6 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editingPost ? 'Edit WordPress Post' : 'Create New WordPress Post'}
               </h3>
               <div className="flex items-center gap-2">

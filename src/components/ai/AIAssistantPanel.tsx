@@ -111,16 +111,16 @@ export default function AIAssistantPanel({
   }
 
   return (
-    <div className="fixed right-4 top-20 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col">
+    <div className="fixed right-4 top-20 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900 border border-gray-200 dark:border-gray-700 z-50 max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-indigo-600" />
-          <h3 className="font-semibold text-gray-900">AI Assistant</h3>
+          <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <h3 className="font-semibold text-gray-900 dark:text-white">AI Assistant</h3>
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
+          className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
           disabled={disabled}
         >
           {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -132,13 +132,13 @@ export default function AIAssistantPanel({
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
           {/* Status Messages */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm flex items-center gap-2">
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-3 py-2 rounded text-sm flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               <span className="text-xs">{error}</span>
             </div>
           )}
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded text-sm flex items-center gap-2">
+            <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-3 py-2 rounded text-sm flex items-center gap-2">
               <CheckCircle className="w-4 h-4 flex-shrink-0" />
               <span className="text-xs">{success}</span>
             </div>
@@ -146,12 +146,12 @@ export default function AIAssistantPanel({
 
           {/* Quick Actions */}
           <div>
-            <h4 className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">Quick Actions</h4>
+            <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Quick Actions</h4>
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleEnhance}
                 disabled={disabled || isProcessing}
-                className="flex items-center gap-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isFeatureProcessing('enhance') ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -163,7 +163,7 @@ export default function AIAssistantPanel({
               <button
                 onClick={handleSummarize}
                 disabled={disabled || isProcessing}
-                className="flex items-center gap-2 px-3 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isFeatureProcessing('summarize') ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -177,12 +177,12 @@ export default function AIAssistantPanel({
 
           {/* SEO Tools */}
           <div>
-            <h4 className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">SEO Tools</h4>
+            <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">SEO Tools</h4>
             <div className="space-y-2">
               <button
                 onClick={handleGenerateMetaDescription}
                 disabled={disabled || isProcessing}
-                className="w-full flex items-center gap-2 px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isFeatureProcessing('seo-meta') ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -194,7 +194,7 @@ export default function AIAssistantPanel({
               <button
                 onClick={handleGenerateTitles}
                 disabled={disabled || isProcessing}
-                className="w-full flex items-center gap-2 px-3 py-2 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-2 px-3 py-2 bg-yellow-50 dark:bg-yellow-900/30 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isFeatureProcessing('titles') ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -206,7 +206,7 @@ export default function AIAssistantPanel({
               <button
                 onClick={handleGenerateKeywords}
                 disabled={disabled || isProcessing}
-                className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isFeatureProcessing('keywords') ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -220,14 +220,14 @@ export default function AIAssistantPanel({
 
           {/* Tone Adjustment */}
           <div>
-            <h4 className="text-xs font-medium text-gray-700 mb-2 uppercase tracking-wide">Adjust Tone</h4>
+            <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide">Adjust Tone</h4>
             <div className="grid grid-cols-2 gap-2">
               {['Professional', 'Casual', 'Friendly', 'Technical'].map((tone) => (
                 <button
                   key={tone}
                   onClick={() => handleAdjustTone(tone.toLowerCase())}
                   disabled={disabled || isProcessing}
-                  className="flex items-center justify-center gap-2 px-3 py-2 bg-pink-50 hover:bg-pink-100 text-pink-700 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-pink-50 dark:bg-pink-900/30 hover:bg-pink-100 dark:hover:bg-pink-900/50 text-pink-700 dark:text-pink-300 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isFeatureProcessing('tone') ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -241,8 +241,8 @@ export default function AIAssistantPanel({
           </div>
 
           {/* Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-xs text-blue-700">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <p className="text-xs text-blue-700 dark:text-blue-300">
               💡 <strong>Tip:</strong> Configure AI models and view usage in Settings.
             </p>
           </div>

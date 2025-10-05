@@ -118,3 +118,36 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Dark mode editor styles */
+.dark .lexical-editor {
+  color: #e5e7eb;
+}
+
+.dark .lexical-toolbar {
+  border-color: #374151;
+  background-color: #1f2937;
+}
+
+.dark .lexical-toolbar button {
+  color: #9ca3af;
+}
+
+.dark .lexical-toolbar button:hover {
+  color: #e5e7eb;
+  background-color: #374151;
+}
+
+.dark .lexical-toolbar button:focus {
+  outline: 2px solid #818cf8;
+}
+
+.dark .lexical-editor pre {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark .lexical-editor blockquote {
+  border-left-color: #4b5563;
+  color: #d1d5db;
+}

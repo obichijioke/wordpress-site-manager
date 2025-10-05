@@ -288,15 +288,15 @@ export default function AISettings() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Settings className="w-8 h-8 text-indigo-600" />
+          <Settings className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">AI Settings</h1>
-            <p className="text-sm text-gray-600">Configure AI providers and model preferences</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Settings</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Configure AI providers and model preferences</p>
           </div>
         </div>
         <button
           onClick={loadData}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh
@@ -305,13 +305,13 @@ export default function AISettings() {
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg flex items-center gap-2">
           <XCircle className="w-5 h-5" />
           {error}
         </div>
       )}
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg flex items-center gap-2">
           <CheckCircle className="w-5 h-5" />
           {success}
         </div>
@@ -319,41 +319,41 @@ export default function AISettings() {
 
       {/* Usage Statistics */}
       {usage && (
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-100">
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg p-6 border border-indigo-100 dark:border-indigo-800">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Current Month Usage</h2>
+            <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Current Month Usage</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-gray-600 mb-1">Tokens Used</div>
-              <div className="text-2xl font-bold text-gray-900">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Tokens Used</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {usage.totalTokens.toLocaleString()}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 of {usage.tokenLimit.toLocaleString()} limit
               </div>
             </div>
-            <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-gray-600 mb-1">Total Cost</div>
-              <div className="text-2xl font-bold text-gray-900">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Cost</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 ${usage.totalCost.toFixed(2)}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {usage.totalRequests} requests
               </div>
             </div>
-            <div className="bg-white rounded-lg p-4">
-              <div className="text-sm text-gray-600 mb-1">Usage</div>
-              <div className="text-2xl font-bold text-gray-900">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border dark:border-gray-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Usage</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {usagePercentage.toFixed(1)}%
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div 
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
+                <div
                   className={`h-2 rounded-full ${
-                    usagePercentage > 80 ? 'bg-red-500' : 
-                    usagePercentage > 50 ? 'bg-yellow-500' : 
-                    'bg-green-500'
+                    usagePercentage > 80 ? 'bg-red-500 dark:bg-red-400' :
+                    usagePercentage > 50 ? 'bg-yellow-500 dark:bg-yellow-400' :
+                    'bg-green-500 dark:bg-green-400'
                   }`}
                   style={{ width: `${Math.min(usagePercentage, 100)}%` }}
                 />
@@ -364,7 +364,7 @@ export default function AISettings() {
       )}
 
       {/* API Keys Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center gap-2 mb-6">
           <Key className="w-5 h-5 text-indigo-600" />
           <h2 className="text-lg font-semibold text-gray-900">API Keys</h2>
@@ -482,7 +482,7 @@ export default function AISettings() {
       </div>
 
       {/* Custom Models Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-indigo-600" />
@@ -622,7 +622,7 @@ export default function AISettings() {
                 <button
                   type="button"
                   onClick={handleCancelCustomModelForm}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                 >
                   Cancel
                 </button>
@@ -701,7 +701,7 @@ export default function AISettings() {
       </div>
 
       {/* Model Selection Section */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center gap-2 mb-6">
           <Sparkles className="w-5 h-5 text-indigo-600" />
           <h2 className="text-lg font-semibold text-gray-900">Model Selection</h2>
@@ -900,7 +900,7 @@ export default function AISettings() {
       <div className="flex justify-end gap-3">
         <button
           onClick={() => loadData()}
-          className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          className="px-6 py-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
         >
           Reset
         </button>

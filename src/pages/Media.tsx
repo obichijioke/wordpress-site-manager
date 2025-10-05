@@ -158,8 +158,8 @@ export default function Media() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Media Library</h1>
-          <p className="text-gray-600">Upload and manage your media files</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Media Library</h1>
+          <p className="text-gray-600 dark:text-gray-300">Upload and manage your media files</p>
         </div>
         <div className="flex gap-2">
           {selectedFiles.size > 0 && (
@@ -205,14 +205,14 @@ export default function Media() {
         onDrop={handleDrop}
         className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors"
       >
-        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Drop files here to upload</h3>
-        <p className="text-gray-600 mb-4">or click the upload button above</p>
+        <Upload className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Drop files here to upload</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">or click the upload button above</p>
         <p className="text-sm text-gray-500">Supports images, PDFs, and documents</p>
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col md:flex-row gap-4 flex-1">
             <div className="relative flex-1">
@@ -276,9 +276,9 @@ export default function Media() {
         </div>
       ) : filteredFiles.length === 0 ? (
         <div className="text-center py-12">
-          <Image className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No media files found</h3>
-          <p className="text-gray-600 mb-4">Upload your first file to get started</p>
+          <Image className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No media files found</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">Upload your first file to get started</p>
           <button
             onClick={() => fileInputRef.current?.click()}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
@@ -291,8 +291,8 @@ export default function Media() {
           {filteredFiles.map((file) => (
             <div
               key={file.id}
-              className={`bg-white rounded-lg border-2 p-4 hover:shadow-md transition-shadow cursor-pointer ${
-                selectedFiles.has(file.id) ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'
+              className={`bg-white dark:bg-gray-800 rounded-lg border-2 p-4 hover:shadow-md dark:hover:shadow-gray-900 transition-shadow cursor-pointer ${
+                selectedFiles.has(file.id) ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-200 dark:border-gray-700'
               }`}
               onClick={() => handleFileSelect(file.id)}
             >
@@ -308,7 +308,7 @@ export default function Media() {
                 )}
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-medium text-gray-900 truncate" title={file.originalName}>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate" title={file.originalName}>
                   {file.originalName}
                 </h3>
                 <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
@@ -339,9 +339,9 @@ export default function Media() {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -369,7 +369,7 @@ export default function Media() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredFiles.map((file) => (
                   <tr key={file.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -394,7 +394,7 @@ export default function Media() {
                           )}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{file.originalName}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{file.originalName}</div>
                           <div className="text-sm text-gray-500">{file.filename}</div>
                         </div>
                       </div>

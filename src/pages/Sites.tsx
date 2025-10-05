@@ -319,8 +319,8 @@ export default function Sites() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">WordPress Sites</h1>
-          <p className="text-gray-600">Manage your WordPress sites and monitor their status</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">WordPress Sites</h1>
+          <p className="text-gray-600 dark:text-gray-300">Manage your WordPress sites and monitor their status</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
@@ -340,7 +340,7 @@ export default function Sites() {
 
       {/* Add/Edit Form */}
       {showAddForm && (
-        <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold mb-4">
             {editingSite ? 'Edit Site' : 'Add New Site'}
           </h3>
@@ -438,9 +438,9 @@ export default function Sites() {
       {/* Sites List */}
       {sites.length === 0 ? (
         <div className="text-center py-12">
-          <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No sites added yet</h3>
-          <p className="text-gray-600 mb-4">Add your first WordPress site to get started</p>
+          <Globe className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No sites added yet</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">Add your first WordPress site to get started</p>
           <button
             onClick={() => setShowAddForm(true)}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
@@ -456,7 +456,7 @@ export default function Sites() {
             const statusColor = getStatusColor(site.healthStatus?.status || 'inactive')
             
             return (
-              <div key={site.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+              <div key={site.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-gray-900 transition-shadow">
                 {/* Header with Status */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -498,8 +498,8 @@ export default function Sites() {
                 </div>
                 
                 {/* Site Info */}
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{site.name}</h3>
-                <p className="text-sm text-gray-600 mb-4 truncate">{site.url}</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{site.name}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 truncate">{site.url}</p>
                 
                 {/* Details */}
                 <div className="space-y-2 text-sm text-gray-600">
