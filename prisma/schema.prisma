@@ -20,11 +20,13 @@ model User {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  sites         Site[]
-  contentDrafts ContentDraft[]
-  aiSettings    AISettings?
-  aiUsage       AIUsage[]
-  customModels  CustomModel[]
+  sites           Site[]
+  contentDrafts   ContentDraft[]
+  aiSettings      AISettings?
+  aiUsage         AIUsage[]
+  customModels    CustomModel[]
+  imageProviders  ImageProvider[]
+  imageUsageLogs  ImageUsageLog[]
 
   @@map("users")
 }
@@ -179,6 +181,40 @@ model CustomModel {
 
   @@unique([userId, identifier])
   @@map("custom_models")
+}
+
+// Image Providers
+model ImageProvider {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider    String   // 'pexels', 'serper', 'openverse'
+  apiKey      String   @map("api_key") // Encrypted
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("image_providers")
+}
+
+model ImageUsageLog {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider    String
+  query       String
+  imageUrl    String   @map("image_url")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("image_usage_logs")
 }
 
 // Enums

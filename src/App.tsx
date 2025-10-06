@@ -8,7 +8,7 @@ import Sites from './pages/Sites'
 import Content from './pages/Content'
 import Categories from './pages/Categories'
 import Media from './pages/Media'
-import AISettings from './pages/AISettings'
+import Settings from './pages/Settings'
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -45,7 +45,7 @@ function AppContent() {
       case 'media':
         return <Media />
       case 'settings':
-        return <AISettings />
+        return <Settings />
       default:
         return <Dashboard />
     }

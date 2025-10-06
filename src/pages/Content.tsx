@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, FileText, Edit, Trash2, Eye, Send, Filter, Search, RefreshCw, Calendar, User, Tag, ExternalLink, Save, X } from 'lucide-react'
+import { Plus, FileText, Edit, Trash2, Eye, Send, Filter, Search, RefreshCw, Calendar, User, Tag, ExternalLink, Save, X, Image as ImageIcon } from 'lucide-react'
 import { apiClient } from '../lib/api'
 import { WordPressPost, WordPressCategory, WordPressTag, PostFormData, PostFilters, Site, WordPressFeaturedMedia } from '../types/wordpress'
 import RichTextEditor from '../components/RichTextEditor'
@@ -7,6 +7,8 @@ import TagsInput from '../components/TagsInput'
 import FeaturedImageUpload from '../components/FeaturedImageUpload'
 import AIAssistantPanel from '../components/ai/AIAssistantPanel'
 import TitleSuggestionsModal from '../components/ai/TitleSuggestionsModal'
+import ImageSearchModal from '../components/images/ImageSearchModal'
+import { ImageResult } from '../lib/image-api'
 
 export default function Content() {
   const [sites, setSites] = useState<Site[]>([])
@@ -52,6 +54,9 @@ export default function Content() {
   // AI Assistant state
   const [showTitleSuggestions, setShowTitleSuggestions] = useState(false)
   const [titleSuggestions, setTitleSuggestions] = useState<string[]>([])
+
+  // Image Search state
+  const [showImageSearch, setShowImageSearch] = useState(false)
 
   useEffect(() => {
     loadSites()
@@ -462,6 +467,25 @@ export default function Content() {
       .join(', ')
   }
 
+  const handleInsertImage = (image: ImageResult) => {
+    // Create HTML for the image with attribution if required
+    let imageHtml = `<img src="${image.url}" alt="${image.title || 'Stock image'}" />`
+
+    if (image.license.requiresAttribution && image.photographer) {
+      const photographerLink = image.photographerUrl
+        ? `<a href="${image.photographerUrl}" target="_blank" rel="noopener noreferrer">${image.photographer}</a>`
+        : image.photographer
+
+      imageHtml += `<p class="image-attribution"><small>Photo by ${photographerLink} on ${image.source}</small></p>`
+    }
+
+    // Insert at the end of the content
+    setFormData(prev => ({
+      ...prev,
+      content: prev.content + '\n' + imageHtml + '\n'
+    }))
+  }
+
   if (sites.length === 0) {
     return (
       <div className="text-center py-12">
@@ -607,11 +631,21 @@ export default function Content() {
             {/* Content */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Content *
                 </label>
-                <div className="text-sm text-gray-500">
-                  {wordCount} words
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowImageSearch(true)}
+                    className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    Search Images
+                  </button>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {wordCount} words
+                  </div>
                 </div>
               </div>
               <RichTextEditor
@@ -621,7 +655,7 @@ export default function Content() {
                 disabled={formLoading}
                 height="400px"
               />
-              <div className="mt-1 text-xs text-gray-500">
+              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Rich text editor with formatting tools. Press Ctrl+S to save draft.
               </div>
             </div>
@@ -758,6 +792,12 @@ export default function Content() {
             onClose={() => setShowTitleSuggestions(false)}
             titles={titleSuggestions}
             onSelect={(title) => setFormData({ ...formData, title })}
+          />
+
+          <ImageSearchModal
+            isOpen={showImageSearch}
+            onClose={() => setShowImageSearch(false)}
+            onSelectImage={handleInsertImage}
           />
         </>
       )}
