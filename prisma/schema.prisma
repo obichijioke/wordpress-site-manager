@@ -27,6 +27,8 @@ model User {
   customModels    CustomModel[]
   imageProviders  ImageProvider[]
   imageUsageLogs  ImageUsageLog[]
+  rssFeeds        RSSFeed[]
+  automationJobs  AutomationJob[]
 
   @@map("users")
 }
@@ -44,10 +46,11 @@ model Site {
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contentDrafts ContentDraft[]
-  contentSync   ContentSync[]
-  categories    Category[]
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentDrafts  ContentDraft[]
+  contentSync    ContentSync[]
+  categories     Category[]
+  automationJobs AutomationJob[]
 
   @@map("sites")
 }
@@ -217,6 +220,72 @@ model ImageUsageLog {
   @@map("image_usage_logs")
 }
 
+// Article Automation Models
+model RSSFeed {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String   // User-friendly name for the feed
+  url         String   // RSS feed URL
+  isActive    Boolean  @default(true) @map("is_active")
+  lastFetched DateTime? @map("last_fetched")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  automationJobs AutomationJob[]
+
+  @@index([userId])
+  @@map("rss_feeds")
+}
+
+model AutomationJob {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  siteId          String   @map("site_id")
+  site            Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  sourceType      AutomationSourceType @map("source_type") // 'rss' or 'topic'
+  rssFeedId       String?  @map("rss_feed_id")
+  rssFeed         RSSFeed? @relation(fields: [rssFeedId], references: [id], onDelete: SetNull)
+
+  topic           String?  // For manual topic input
+  sourceUrl       String?  @map("source_url") // Original RSS article URL if from RSS
+  sourceTitle     String?  @map("source_title") // Original RSS article title
+
+  status          AutomationStatus @default(PENDING)
+
+  // Generated article data
+  generatedTitle  String?  @map("generated_title")
+  generatedContent String? @map("generated_content")
+  generatedExcerpt String? @map("generated_excerpt")
+
+  // WordPress publishing data
+  wpPostId        Int?     @map("wp_post_id")
+  publishedAt     DateTime? @map("published_at")
+
+  // Error tracking
+  errorMessage    String?  @map("error_message")
+
+  // AI usage tracking
+  aiModel         String?  @map("ai_model")
+  tokensUsed      Int?     @map("tokens_used")
+  aiCost          Float?   @map("ai_cost")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([siteId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("automation_jobs")
+}
+
 // Enums
 enum UserRole {
   SITE_MANAGER
@@ -233,4 +302,18 @@ enum ContentStatus {
   DRAFT
   PUBLISHED
   SCHEDULED
+}
+
+enum AutomationSourceType {
+  RSS
+  TOPIC
+}
+
+enum AutomationStatus {
+  PENDING
+  GENERATING
+  GENERATED
+  PUBLISHING
+  PUBLISHED
+  FAILED
 }

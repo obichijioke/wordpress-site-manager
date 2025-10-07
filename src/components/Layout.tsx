@@ -16,7 +16,8 @@ import {
   LogOut,
   User,
   Moon,
-  Sun
+  Sun,
+  Sparkles
 } from 'lucide-react'
 
 interface LayoutProps {
@@ -29,6 +30,7 @@ const navigation = [
   { name: 'Dashboard', href: 'dashboard', icon: Home },
   { name: 'Sites', href: 'sites', icon: Globe },
   { name: 'Content', href: 'content', icon: FileText },
+  { name: 'Article Automation', href: 'automation', icon: Sparkles },
   { name: 'Categories', href: 'categories', icon: FolderTree },
   { name: 'Media', href: 'media', icon: Image },
   { name: 'Settings', href: 'settings', icon: Settings },

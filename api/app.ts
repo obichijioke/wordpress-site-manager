@@ -19,6 +19,7 @@ import mediaRoutes from './routes/media.js'
 import aiRoutes from './routes/ai.js'
 import aiSettingsRoutes from './routes/ai-settings.js'
 import imageRoutes from './routes/images.js'
+import articleAutomationRoutes from './routes/article-automation.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -47,6 +48,7 @@ app.use('/api/media', mediaRoutes)
 app.use('/api/ai', aiRoutes)
 app.use('/api/ai-settings', aiSettingsRoutes)
 app.use('/api/images', imageRoutes)
+app.use('/api/article-automation', articleAutomationRoutes)
 
 /**
  * health

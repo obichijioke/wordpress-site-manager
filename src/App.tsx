@@ -6,6 +6,7 @@ import LoginPage from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Sites from './pages/Sites'
 import Content from './pages/Content'
+import ArticleAutomation from './pages/ArticleAutomation'
 import Categories from './pages/Categories'
 import Media from './pages/Media'
 import Settings from './pages/Settings'
@@ -40,6 +41,8 @@ function AppContent() {
         return <Sites />
       case 'content':
         return <Content />
+      case 'automation':
+        return <ArticleAutomation />
       case 'categories':
         return <Categories />
       case 'media':
