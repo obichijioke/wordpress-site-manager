@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, FileText, Edit, Trash2, Eye, Send, Filter, Search, RefreshCw, Calendar, User, Tag, ExternalLink, Save, X, Image as ImageIcon } from 'lucide-react'
+import { Plus, FileText, Edit, Trash2, Eye, Send, Filter, Search, RefreshCw, Calendar, User, Tag, ExternalLink, Save, X, Image as ImageIcon, Wand2 } from 'lucide-react'
 import { apiClient } from '../lib/api'
 import { WordPressPost, WordPressCategory, WordPressTag, PostFormData, PostFilters, Site, WordPressFeaturedMedia } from '../types/wordpress'
 import RichTextEditor from '../components/RichTextEditor'
@@ -7,6 +7,7 @@ import TagsInput from '../components/TagsInput'
 import FeaturedImageUpload from '../components/FeaturedImageUpload'
 import AIAssistantPanel from '../components/ai/AIAssistantPanel'
 import TitleSuggestionsModal from '../components/ai/TitleSuggestionsModal'
+import AIContentGeneratorModal from '../components/ai/AIContentGeneratorModal'
 import ImageSearchModal from '../components/images/ImageSearchModal'
 import { ImageResult } from '../lib/image-api'
 
@@ -57,6 +58,9 @@ export default function Content() {
 
   // Image Search state
   const [showImageSearch, setShowImageSearch] = useState(false)
+
+  // AI Content Generator state
+  const [showContentGenerator, setShowContentGenerator] = useState(false)
 
   useEffect(() => {
     loadSites()
@@ -256,6 +260,13 @@ export default function Content() {
   const handleImageRemove = () => {
     setFeaturedMediaData(null)
     setFormData(prev => ({ ...prev, featuredMedia: undefined }))
+  }
+
+  const handleInsertGeneratedContent = (content: string, title?: string) => {
+    if (title) {
+      setFormData(prev => ({ ...prev, title }))
+    }
+    setFormData(prev => ({ ...prev, content }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -637,6 +648,14 @@ export default function Content() {
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
+                    onClick={() => setShowContentGenerator(true)}
+                    className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 transition-colors font-medium"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    Generate with AI
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setShowImageSearch(true)}
                     className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 transition-colors"
                   >
@@ -798,6 +817,12 @@ export default function Content() {
             isOpen={showImageSearch}
             onClose={() => setShowImageSearch(false)}
             onSelectImage={handleInsertImage}
+          />
+
+          <AIContentGeneratorModal
+            isOpen={showContentGenerator}
+            onClose={() => setShowContentGenerator(false)}
+            onInsert={handleInsertGeneratedContent}
           />
         </>
       )}
