@@ -111,7 +111,7 @@ export default function AIAssistantPanel({
   }
 
   return (
-    <div className="fixed right-4 top-20 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900 border border-gray-200 dark:border-gray-700 z-50 max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col">
+    <div className="fixed right-4 bottom-4 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900 border border-gray-200 dark:border-gray-700 z-50 max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20">
         <div className="flex items-center gap-2">

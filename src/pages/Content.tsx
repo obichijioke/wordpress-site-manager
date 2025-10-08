@@ -857,18 +857,6 @@ export default function Content() {
           </form>
           </div>
 
-          {/* AI Assistant Panel */}
-          <AIAssistantPanel
-            content={formData.content}
-            onContentUpdate={(content) => setFormData({ ...formData, content })}
-            onExcerptUpdate={(excerpt) => setFormData({ ...formData, excerpt })}
-            onTitleSuggestions={(titles) => {
-              setTitleSuggestions(titles)
-              setShowTitleSuggestions(true)
-            }}
-            disabled={formLoading}
-          />
-
           <TitleSuggestionsModal
             isOpen={showTitleSuggestions}
             onClose={() => setShowTitleSuggestions(false)}
@@ -1210,6 +1198,20 @@ export default function Content() {
             </div>
           )}
         </>
+      )}
+
+      {/* AI Assistant Panel - Floating at bottom */}
+      {showEditor && (
+        <AIAssistantPanel
+          content={formData.content}
+          onContentUpdate={(content) => setFormData({ ...formData, content })}
+          onExcerptUpdate={(excerpt) => setFormData({ ...formData, excerpt })}
+          onTitleSuggestions={(titles) => {
+            setTitleSuggestions(titles)
+            setShowTitleSuggestions(true)
+          }}
+          disabled={formLoading}
+        />
       )}
     </div>
   )
