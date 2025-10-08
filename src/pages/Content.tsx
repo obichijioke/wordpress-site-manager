@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Plus, FileText, Edit, Trash2, Eye, Send, Filter, Search, RefreshCw, Calendar, User, Tag, ExternalLink, Save, X, Image as ImageIcon, Wand2 } from 'lucide-react'
+import { Plus, FileText, Edit, Trash2, Eye, Send, Filter, Search, RefreshCw, Calendar, User, Tag, ExternalLink, Save, X, Image as ImageIcon, Wand2, CheckCircle } from 'lucide-react'
 import { apiClient } from '../lib/api'
+import { automationClient } from '../lib/automation-api'
 import { WordPressPost, WordPressCategory, WordPressTag, PostFormData, PostFilters, Site, WordPressFeaturedMedia } from '../types/wordpress'
+import { ResearchTopicResponse } from '../types/automation'
 import RichTextEditor from '../components/RichTextEditor'
 import TagsInput from '../components/TagsInput'
 import FeaturedImageUpload from '../components/FeaturedImageUpload'
@@ -9,6 +11,7 @@ import AIAssistantPanel from '../components/ai/AIAssistantPanel'
 import TitleSuggestionsModal from '../components/ai/TitleSuggestionsModal'
 import AIContentGeneratorModal from '../components/ai/AIContentGeneratorModal'
 import ImageSearchModal from '../components/images/ImageSearchModal'
+import ResearchTopicModal from '../components/research/ResearchTopicModal'
 import { ImageResult } from '../lib/image-api'
 
 export default function Content() {
@@ -62,8 +65,14 @@ export default function Content() {
   // AI Content Generator state
   const [showContentGenerator, setShowContentGenerator] = useState(false)
 
+  // Research Topic state
+  const [showResearchModal, setShowResearchModal] = useState(false)
+  const [hasResearchSettings, setHasResearchSettings] = useState(false)
+  const [researchSuccess, setResearchSuccess] = useState<string | null>(null)
+
   useEffect(() => {
     loadSites()
+    checkResearchSettings()
   }, [])
 
   useEffect(() => {
@@ -153,6 +162,37 @@ export default function Content() {
       console.error('Failed to load sites:', err)
       setError('Failed to load sites')
     }
+  }
+
+  const checkResearchSettings = async () => {
+    try {
+      const response = await automationClient.getResearchSettings()
+      setHasResearchSettings(!!response.settings && response.settings.isEnabled)
+    } catch (err) {
+      console.error('Failed to check research settings:', err)
+      setHasResearchSettings(false)
+    }
+  }
+
+  const handleResearchComplete = (research: ResearchTopicResponse) => {
+    // Prefill form with research data
+    setFormData({
+      title: research.title,
+      content: research.content,
+      excerpt: research.excerpt,
+      status: 'draft',
+      categories: [],
+      tags: [],
+      slug: '',
+      featuredMedia: undefined
+    })
+
+    // Open the editor if not already open
+    setShowEditor(true)
+
+    // Show success message
+    setResearchSuccess('Research completed! Form prefilled with results.')
+    setTimeout(() => setResearchSuccess(null), 5000)
   }
 
   const loadPosts = async (showRefreshing = false) => {
@@ -524,6 +564,21 @@ export default function Content() {
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
+          {hasResearchSettings && (
+            <button
+              onClick={() => setShowResearchModal(true)}
+              disabled={!selectedSite}
+              className="bg-blue-600 dark:bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2 transition-colors relative"
+              title="Research a topic to prefill post content"
+            >
+              <Search className="h-4 w-4" />
+              Research Topic
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
+            </button>
+          )}
           <button
             onClick={() => setShowEditor(true)}
             disabled={!selectedSite}
@@ -564,6 +619,14 @@ export default function Content() {
           )}
         </div>
       </div>
+
+      {/* Success Message */}
+      {researchSuccess && (
+        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg flex items-center gap-2">
+          <CheckCircle className="h-5 w-5 flex-shrink-0" />
+          <div>{researchSuccess}</div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -826,6 +889,13 @@ export default function Content() {
           />
         </>
       )}
+
+      {/* Research Topic Modal */}
+      <ResearchTopicModal
+        isOpen={showResearchModal}
+        onClose={() => setShowResearchModal(false)}
+        onResearchComplete={handleResearchComplete}
+      />
 
       {/* Filters and Search */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">

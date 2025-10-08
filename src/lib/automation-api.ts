@@ -18,7 +18,11 @@ import {
   RSSFeedsResponse,
   RSSFeedItemsResponse,
   GenerateArticleResponse,
-  PublishArticleResponse
+  PublishArticleResponse,
+  ResearchSettings,
+  ResearchSettingsFormData,
+  ResearchTopicRequest,
+  ResearchTopicResponse
 } from '../types/automation'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
@@ -143,7 +147,58 @@ class AutomationAPIClient {
     )
     return response.data
   }
+
+  // Research Settings Management
+  async getResearchSettings(): Promise<{ success: boolean; settings: (ResearchSettings & { hasToken?: boolean }) | null }> {
+    const response = await axios.get(
+      `${API_BASE_URL}/article-automation/research-settings`,
+      this.getAuthHeader()
+    )
+    return response.data
+  }
+
+  async saveResearchSettings(data: ResearchSettingsFormData): Promise<{ success: boolean; settings: ResearchSettings & { hasToken?: boolean }; message: string }> {
+    const response = await axios.post(
+      `${API_BASE_URL}/article-automation/research-settings`,
+      data,
+      this.getAuthHeader()
+    )
+    return response.data
+  }
+
+  async deleteResearchSettings(): Promise<{ success: boolean; message: string }> {
+    const response = await axios.delete(
+      `${API_BASE_URL}/article-automation/research-settings`,
+      this.getAuthHeader()
+    )
+    return response.data
+  }
+
+  async testResearchConnection(apiUrl: string, bearerToken?: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/article-automation/research-topic`,
+        { context: 'Test connection' },
+        this.getAuthHeader()
+      )
+      return { success: true, message: 'Connection successful!' }
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Connection failed'
+      }
+    }
+  }
+
+  // Topic Research
+  async researchTopic(request: ResearchTopicRequest): Promise<{ success: boolean; research: ResearchTopicResponse }> {
+    const response = await axios.post(
+      `${API_BASE_URL}/article-automation/research-topic`,
+      request,
+      this.getAuthHeader()
+    )
+    return response.data
+  }
 }
 
 export const automationClient = new AutomationAPIClient()
-

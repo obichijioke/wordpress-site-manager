@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Settings as SettingsIcon, Sparkles, Image } from 'lucide-react'
+import { Settings as SettingsIcon, Sparkles, Image, Search } from 'lucide-react'
 import AISettings from './AISettings'
 import ImageSettings from './ImageSettings'
+import ResearchSettings from './ResearchSettings'
 
-type SettingsTab = 'ai' | 'images'
+type SettingsTab = 'ai' | 'images' | 'research'
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('ai')
@@ -11,6 +12,7 @@ export default function Settings() {
   const tabs = [
     { id: 'ai' as SettingsTab, name: 'AI Settings', icon: Sparkles },
     { id: 'images' as SettingsTab, name: 'Image Providers', icon: Image },
+    { id: 'research' as SettingsTab, name: 'Topic Research', icon: Search },
   ]
 
   return (
@@ -45,8 +47,8 @@ export default function Settings() {
       <div>
         {activeTab === 'ai' && <AISettings />}
         {activeTab === 'images' && <ImageSettings />}
+        {activeTab === 'research' && <ResearchSettings />}
       </div>
     </div>
   )
 }
-

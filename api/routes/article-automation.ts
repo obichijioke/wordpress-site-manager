@@ -5,7 +5,7 @@
 
 import { Router, type Response } from 'express'
 import { prisma } from '../lib/prisma'
-import { authenticateToken, AuthenticatedRequest, decryptPassword } from '../lib/auth'
+import { authenticateToken, AuthenticatedRequest, decryptPassword, encryptPassword } from '../lib/auth'
 import { RSSParserService } from '../services/rss-parser'
 import { ArticleAutomationService } from '../services/article-automation'
 import axios from 'axios'
@@ -638,6 +638,216 @@ router.delete('/jobs/:jobId', authenticateToken, async (req: AuthenticatedReques
   } catch (error: any) {
     console.error('Delete automation job error:', error)
     res.status(500).json({ error: 'Failed to delete automation job' })
+  }
+})
+
+/**
+ * Get research settings for the user
+ * GET /api/article-automation/research-settings
+ */
+router.get('/research-settings', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const settings = await prisma.researchSettings.findUnique({
+      where: { userId: req.user!.id }
+    })
+
+    if (!settings) {
+      res.json({ success: true, settings: null })
+      return
+    }
+
+    // Don't send the encrypted token to the frontend
+    const { bearerToken, ...settingsWithoutToken } = settings
+
+    res.json({
+      success: true,
+      settings: {
+        ...settingsWithoutToken,
+        hasToken: !!bearerToken
+      }
+    })
+  } catch (error: any) {
+    console.error('Get research settings error:', error)
+    res.status(500).json({ error: 'Failed to fetch research settings' })
+  }
+})
+
+/**
+ * Create or update research settings
+ * POST /api/article-automation/research-settings
+ */
+router.post('/research-settings', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { apiUrl, bearerToken, isEnabled = true } = req.body
+
+    if (!apiUrl) {
+      res.status(400).json({ error: 'API URL is required' })
+      return
+    }
+
+    // Validate URL format
+    try {
+      new URL(apiUrl)
+    } catch {
+      res.status(400).json({ error: 'Invalid API URL format' })
+      return
+    }
+
+    // Encrypt bearer token if provided
+    const encryptedToken = bearerToken ? encryptPassword(bearerToken) : null
+
+    // Upsert settings
+    const settings = await prisma.researchSettings.upsert({
+      where: { userId: req.user!.id },
+      update: {
+        apiUrl,
+        bearerToken: encryptedToken,
+        isEnabled
+      },
+      create: {
+        userId: req.user!.id,
+        apiUrl,
+        bearerToken: encryptedToken,
+        isEnabled
+      }
+    })
+
+    // Don't send the encrypted token to the frontend
+    const { bearerToken: _, ...settingsWithoutToken } = settings
+
+    res.json({
+      success: true,
+      settings: {
+        ...settingsWithoutToken,
+        hasToken: !!encryptedToken
+      },
+      message: 'Research settings saved successfully'
+    })
+  } catch (error: any) {
+    console.error('Save research settings error:', error)
+    res.status(500).json({ error: 'Failed to save research settings' })
+  }
+})
+
+/**
+ * Delete research settings
+ * DELETE /api/article-automation/research-settings
+ */
+router.delete('/research-settings', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    await prisma.researchSettings.delete({
+      where: { userId: req.user!.id }
+    })
+
+    res.json({ success: true, message: 'Research settings deleted successfully' })
+  } catch (error: any) {
+    if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Research settings not found' })
+      return
+    }
+    console.error('Delete research settings error:', error)
+    res.status(500).json({ error: 'Failed to delete research settings' })
+  }
+})
+
+/**
+ * Research a topic using external API
+ * POST /api/article-automation/research-topic
+ */
+router.post('/research-topic', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { context } = req.body
+
+    if (!context || !context.trim()) {
+      res.status(400).json({ error: 'Context/topic is required' })
+      return
+    }
+
+    // Get user's research settings
+    const settings = await prisma.researchSettings.findUnique({
+      where: { userId: req.user!.id }
+    })
+
+    if (!settings) {
+      res.status(400).json({ error: 'Research API not configured. Please configure it in Settings.' })
+      return
+    }
+
+    if (!settings.isEnabled) {
+      res.status(400).json({ error: 'Research API is disabled. Please enable it in Settings.' })
+      return
+    }
+
+    // Decrypt bearer token if present
+    const bearerToken = settings.bearerToken ? decryptPassword(settings.bearerToken) : null
+
+    // Prepare request headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    }
+
+    if (bearerToken) {
+      headers['Authorization'] = `Bearer ${bearerToken}`
+    }
+
+    // Make request to external research API
+    try {
+      const response = await axios.post(
+        settings.apiUrl,
+        { context: context.trim() },
+        {
+          headers,
+          timeout: 60000, // 60 seconds timeout
+          validateStatus: (status) => status < 500 // Don't throw on 4xx errors
+        }
+      )
+      //console.log('Research API response data:', response.data.output);
+      if (response.status !== 200) {
+        res.status(response.status).json({
+          error: `Research API returned status ${response.status}`,
+          details: response.data
+        })
+        return
+      }
+
+      // Validate response format
+      const { title, excerpt, content } = response.data.output;
+
+      if (!title || !excerpt || !content) {
+        res.status(500).json({
+          error: 'Invalid response format from research API. Expected: { title, excerpt, content }'
+        })
+        return
+      }
+
+      res.json({
+        success: true,
+        research: {
+          title,
+          excerpt,
+          content
+        }
+      })
+    } catch (error: any) {
+      if (error.code === 'ECONNABORTED') {
+        res.status(504).json({ error: 'Research API request timed out (60s)' })
+        return
+      }
+
+      if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        res.status(503).json({ error: 'Could not connect to research API. Please check the API URL.' })
+        return
+      }
+
+      console.error('Research API request error:', error)
+      res.status(500).json({
+        error: 'Failed to fetch research data',
+        details: error.message
+      })
+    }
+  } catch (error: any) {
+    console.error('Research topic error:', error)
+    res.status(500).json({ error: 'Failed to research topic' })
   }
 })
 

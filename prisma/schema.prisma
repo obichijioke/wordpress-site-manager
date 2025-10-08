@@ -20,15 +20,16 @@ model User {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  sites           Site[]
-  contentDrafts   ContentDraft[]
-  aiSettings      AISettings?
-  aiUsage         AIUsage[]
-  customModels    CustomModel[]
-  imageProviders  ImageProvider[]
-  imageUsageLogs  ImageUsageLog[]
-  rssFeeds        RSSFeed[]
-  automationJobs  AutomationJob[]
+  sites            Site[]
+  contentDrafts    ContentDraft[]
+  aiSettings       AISettings?
+  aiUsage          AIUsage[]
+  customModels     CustomModel[]
+  imageProviders   ImageProvider[]
+  imageUsageLogs   ImageUsageLog[]
+  rssFeeds         RSSFeed[]
+  automationJobs   AutomationJob[]
+  researchSettings ResearchSettings?
 
   @@map("users")
 }
@@ -284,6 +285,22 @@ model AutomationJob {
   @@index([status])
   @@index([createdAt])
   @@map("automation_jobs")
+}
+
+// Topic Research Settings
+model ResearchSettings {
+  id          String   @id @default(cuid())
+  userId      String   @unique @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  apiUrl      String   @map("api_url")
+  bearerToken String?  @map("bearer_token") // Encrypted
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("research_settings")
 }
 
 // Enums

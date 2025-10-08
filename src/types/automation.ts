@@ -144,3 +144,29 @@ export interface PublishArticleResponse {
   postUrl: string
 }
 
+// Research Settings
+export interface ResearchSettings {
+  id: string
+  userId: string
+  apiUrl: string
+  bearerToken?: string
+  isEnabled: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ResearchSettingsFormData {
+  apiUrl: string
+  bearerToken?: string
+  isEnabled: boolean
+}
+
+export interface ResearchTopicRequest {
+  context: string
+}
+
+export interface ResearchTopicResponse {
+  title: string
+  excerpt: string
+  content: string
+}
