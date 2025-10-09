@@ -868,6 +868,8 @@ export default function Content() {
             isOpen={showImageSearch}
             onClose={() => setShowImageSearch(false)}
             onSelectImage={handleInsertImage}
+            articleTitle={formData.title}
+            articleContent={formData.content}
           />
 
           <AIContentGeneratorModal

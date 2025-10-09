@@ -2,8 +2,70 @@ import express from 'express'
 import axios from 'axios'
 import { authenticateToken } from '../lib/auth.js'
 import { ImageService } from '../services/images/image-service.js'
+import { AIService } from '../services/ai/ai-service.js'
 
 const router = express.Router()
+
+/**
+ * POST /api/images/suggest-search-terms
+ * Generate AI-powered image search term suggestions based on article content
+ */
+router.post('/suggest-search-terms', authenticateToken, async (req, res) => {
+  try {
+    const { title, content } = req.body
+    const userId = req.user!.id
+
+    // Validate required fields
+    if (!title && !content) {
+      return res.status(400).json({
+        error: 'At least one of title or content is required'
+      })
+    }
+
+    // Generate search term suggestions using AI
+    const result = await AIService.generateImageSearchTerms(
+      userId,
+      title || '',
+      content || ''
+    )
+
+    // Parse the AI response to extract search terms
+    let searchTerms: string[] = []
+    try {
+      // The AI should return a JSON array of strings
+      const parsed = JSON.parse(result.content.trim())
+      if (Array.isArray(parsed)) {
+        searchTerms = parsed.filter(term => typeof term === 'string' && term.trim().length > 0)
+      }
+    } catch (parseError) {
+      // Fallback: try to extract terms from plain text response
+      const lines = result.content.trim().split('\n')
+      searchTerms = lines
+        .map(line => line.replace(/^[-*•\d.)\]]+\s*/, '').replace(/["\[\]]/g, '').trim())
+        .filter(term => term.length > 0 && term.length < 100)
+        .slice(0, 5)
+    }
+
+    // Ensure we have at least some suggestions
+    if (searchTerms.length === 0) {
+      searchTerms = ['stock photo', 'business', 'technology']
+    }
+
+    res.json({
+      success: true,
+      searchTerms,
+      tokensUsed: result.tokensUsed,
+      cost: result.cost
+    })
+  } catch (error: any) {
+    console.error('Image search term suggestion error:', error)
+    res.status(500).json({
+      error: error.message || 'Failed to generate search term suggestions',
+      // Provide fallback suggestions on error
+      searchTerms: ['stock photo', 'business', 'technology']
+    })
+  }
+})
 
 /**
  * POST /api/images/search

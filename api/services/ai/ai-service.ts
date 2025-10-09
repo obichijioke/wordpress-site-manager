@@ -384,5 +384,64 @@ export class AIService {
       }
     ], { maxTokens: 1000 })
   }
+
+  /**
+   * Generate Image Search Terms
+   * Analyzes article content and suggests relevant image search keywords
+   */
+  static async generateImageSearchTerms(
+    userId: string,
+    title: string,
+    content: string
+  ): Promise<AIResponse> {
+    // Prepare the content for analysis (limit to first 2000 chars to save tokens)
+    const contentPreview = content.substring(0, 2000)
+
+    return this.chatCompletion(userId, 'keywords', [
+      {
+        role: 'system',
+        content: `You are an expert at extracting specific names, people, events, and scenes from article content to create precise image search terms.
+
+Your task: Generate 3-5 highly specific search terms that include ACTUAL NAMES and SPECIFIC EVENTS mentioned in the article.
+
+CRITICAL RULES:
+1. ALWAYS include the actual person's name if mentioned (e.g., "Nicki Minaj at the Grammys", "Elon Musk giving presentation", "Taylor Swift on stage")
+2. ALWAYS include specific event names if mentioned (e.g., "Super Bowl halftime show", "Met Gala red carpet", "Oscars ceremony")
+3. ALWAYS include specific location names if mentioned (e.g., "Times Square New York", "Eiffel Tower Paris", "Golden Gate Bridge")
+4. Include specific incidents or situations described (e.g., "wardrobe malfunction at gym", "red carpet appearance", "concert performance")
+5. DO NOT generalize names - use the exact names from the article
+6. DO NOT use generic terms like "celebrity", "famous person", "athlete" - use their actual names
+7. Each search term should be 2-10 words combining the person/place name with the action/event
+
+Examples of CORRECT search terms:
+- "Nicki Minaj at the Grammys"
+- "Cardi B wardrobe malfunction at the gym"
+- "LeBron James dunking basketball"
+- "Kim Kardashian Met Gala dress"
+- "Beyonce Super Bowl performance"
+- "Donald Trump giving speech"
+- "Serena Williams tennis match"
+
+Examples of WRONG search terms (too generic):
+- "celebrity at awards show" ❌ (should be "Taylor Swift at MTV Awards")
+- "athlete playing sports" ❌ (should be "Cristiano Ronaldo soccer game")
+- "politician speaking" ❌ (should be "Joe Biden press conference")
+
+If no specific names are mentioned, then use specific descriptive scenes from the article.
+
+Return ONLY the search terms as a JSON array of strings, nothing else. Format:
+["Name/Event specific term 1", "Name/Event specific term 2", "Name/Event specific term 3"]`
+      },
+      {
+        role: 'user',
+        content: `Extract the ACTUAL NAMES of people, places, and events from this article and create specific image search terms:
+
+Title: ${title || 'Untitled'}
+
+Content:
+${contentPreview}${content.length > 2000 ? '...' : ''}`
+      }
+    ], { maxTokens: 300, temperature: 0.5 })
+  }
 }
 

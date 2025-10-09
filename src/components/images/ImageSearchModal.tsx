@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { X, Search, Loader2, AlertCircle, Image as ImageIcon, ExternalLink } from 'lucide-react'
+import { X, Search, Loader2, AlertCircle, Image as ImageIcon, ExternalLink, Sparkles } from 'lucide-react'
 import { imageClient, ImageResult, ImageSearchResponse } from '../../lib/image-api'
 import { debounce } from 'lodash'
 
@@ -7,9 +7,17 @@ interface ImageSearchModalProps {
   isOpen: boolean
   onClose: () => void
   onSelectImage: (image: ImageResult) => void
+  articleTitle?: string
+  articleContent?: string
 }
 
-export default function ImageSearchModal({ isOpen, onClose, onSelectImage }: ImageSearchModalProps) {
+export default function ImageSearchModal({
+  isOpen,
+  onClose,
+  onSelectImage,
+  articleTitle,
+  articleContent
+}: ImageSearchModalProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<ImageResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -17,6 +25,36 @@ export default function ImageSearchModal({ isOpen, onClose, onSelectImage }: Ima
   const [selectedImage, setSelectedImage] = useState<ImageResult | null>(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+
+  // Load AI suggestions when modal opens
+  useEffect(() => {
+    if (isOpen && (articleTitle || articleContent)) {
+      loadSuggestions()
+    }
+  }, [isOpen])
+
+  const loadSuggestions = async () => {
+    if (!articleTitle && !articleContent) return
+
+    try {
+      setLoadingSuggestions(true)
+      const response = await imageClient.suggestSearchTerms(
+        articleTitle || '',
+        articleContent || ''
+      )
+
+      if (response.success && response.searchTerms.length > 0) {
+        setSuggestions(response.searchTerms)
+      }
+    } catch (err) {
+      console.error('Failed to load search suggestions:', err)
+      // Silently fail - suggestions are optional
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }
 
   // Debounced search function
   const debouncedSearch = useCallback(
@@ -38,7 +76,7 @@ export default function ImageSearchModal({ isOpen, onClose, onSelectImage }: Ima
 
         // Combine results from all providers
         const allResults = responses.flatMap(r => r.results)
-        
+
         if (pageNum === 1) {
           setResults(allResults)
         } else {
@@ -80,6 +118,11 @@ export default function ImageSearchModal({ isOpen, onClose, onSelectImage }: Ima
       onSelectImage(selectedImage)
       onClose()
     }
+  }
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion)
+    // The useEffect will trigger the search automatically
   }
 
   if (!isOpen) return null
@@ -124,6 +167,38 @@ export default function ImageSearchModal({ isOpen, onClose, onSelectImage }: Ima
                 autoFocus
               />
             </div>
+
+            {/* AI Suggestions */}
+            {(loadingSuggestions || suggestions.length > 0) && (
+              <div className="mt-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-indigo-500 dark:text-indigo-400" />
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    AI Suggestions
+                  </span>
+                </div>
+
+                {loadingSuggestions ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Generating suggestions...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="px-3 py-1.5 text-sm bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5"
+                      >
+                        <Search className="h-3 w-3" />
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Content */}

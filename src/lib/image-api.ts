@@ -54,6 +54,14 @@ export interface UsageStats {
   }>
 }
 
+export interface ImageSearchTermSuggestionsResponse {
+  success: boolean
+  searchTerms: string[]
+  tokensUsed?: number
+  cost?: number
+  error?: string
+}
+
 export class ImageAPIClient {
   private baseUrl: string
 
@@ -189,6 +197,34 @@ export class ImageAPIClient {
     } catch (error) {
       this.handleError(error, 'Failed to delete provider')
       throw error
+    }
+  }
+
+  /**
+   * Get AI-powered image search term suggestions based on article content
+   */
+  async suggestSearchTerms(
+    title: string,
+    content: string
+  ): Promise<ImageSearchTermSuggestionsResponse> {
+    try {
+      const response = await axios.post<ImageSearchTermSuggestionsResponse>(
+        `${this.baseUrl}/images/suggest-search-terms`,
+        { title, content },
+        this.getAuthHeader()
+      )
+      return response.data
+    } catch (error) {
+      this.handleError(error, 'Failed to get search term suggestions')
+      // Return fallback suggestions on error
+      if (axios.isAxiosError(error) && error.response?.data) {
+        return error.response.data as ImageSearchTermSuggestionsResponse
+      }
+      return {
+        success: false,
+        searchTerms: ['stock photo', 'business', 'technology'],
+        error: 'Failed to generate suggestions'
+      }
     }
   }
 
