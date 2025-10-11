@@ -98,7 +98,6 @@ export interface GenerateFromRSSData {
   siteId: string
   rssFeedId: string
   articleUrl: string
-  rewriteStyle?: 'summary' | 'expand' | 'rewrite'
 }
 
 export interface PublishAutomationJobData {

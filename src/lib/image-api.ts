@@ -62,6 +62,14 @@ export interface ImageSearchTermSuggestionsResponse {
   error?: string
 }
 
+export interface ImageUrlFilter {
+  id: string
+  pattern: string
+  description?: string
+  isActive: boolean
+  createdAt: Date
+}
+
 export class ImageAPIClient {
   private baseUrl: string
 
@@ -225,6 +233,69 @@ export class ImageAPIClient {
         searchTerms: ['stock photo', 'business', 'technology'],
         error: 'Failed to generate suggestions'
       }
+    }
+  }
+
+  /**
+   * Get all URL filters for the current user
+   */
+  async getUrlFilters(): Promise<ImageUrlFilter[]> {
+    try {
+      const response = await axios.get<ImageUrlFilter[]>(
+        `${this.baseUrl}/images/url-filters`,
+        this.getAuthHeader()
+      )
+      return response.data
+    } catch (error) {
+      this.handleError(error, 'Failed to get URL filters')
+      throw error
+    }
+  }
+
+  /**
+   * Add a new URL filter
+   */
+  async addUrlFilter(pattern: string, description?: string): Promise<void> {
+    try {
+      await axios.post(
+        `${this.baseUrl}/images/url-filters`,
+        { pattern, description },
+        this.getAuthHeader()
+      )
+    } catch (error) {
+      this.handleError(error, 'Failed to add URL filter')
+      throw error
+    }
+  }
+
+  /**
+   * Remove a URL filter
+   */
+  async removeUrlFilter(filterId: string): Promise<void> {
+    try {
+      await axios.delete(
+        `${this.baseUrl}/images/url-filters/${filterId}`,
+        this.getAuthHeader()
+      )
+    } catch (error) {
+      this.handleError(error, 'Failed to remove URL filter')
+      throw error
+    }
+  }
+
+  /**
+   * Toggle a URL filter active/inactive
+   */
+  async toggleUrlFilter(filterId: string): Promise<void> {
+    try {
+      await axios.patch(
+        `${this.baseUrl}/images/url-filters/${filterId}/toggle`,
+        {},
+        this.getAuthHeader()
+      )
+    } catch (error) {
+      this.handleError(error, 'Failed to toggle URL filter')
+      throw error
     }
   }
 

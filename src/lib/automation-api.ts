@@ -100,6 +100,28 @@ class AutomationAPIClient {
     return response.data
   }
 
+  // Generate and publish article in one step (with metadata and images)
+  async generateAndPublish(data: {
+    siteId: string
+    rssFeedId?: string
+    articleTitle: string
+    articleUrl?: string
+    publishStatus?: 'draft' | 'publish'
+  }): Promise<{
+    success: boolean
+    job: AutomationJobWithDetails
+    wpPostId: number
+    wpLink: string
+    message: string
+  }> {
+    const response = await axios.post(
+      `${API_BASE_URL}/article-automation/generate-and-publish`,
+      data,
+      this.getAuthHeader()
+    )
+    return response.data
+  }
+
   // Automation Jobs Management
   async getAutomationJobs(params?: {
     page?: number

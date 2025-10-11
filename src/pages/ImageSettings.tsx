@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Image as ImageIcon, 
-  Key, 
-  Eye, 
-  EyeOff, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Image as ImageIcon,
+  Key,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  XCircle,
   Loader2,
   Save,
   RefreshCw,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Filter,
+  Plus,
+  X
 } from 'lucide-react'
-import { imageClient, ImageProviderConfig, UsageStats } from '../lib/image-api'
+import { imageClient, ImageProviderConfig, UsageStats, ImageUrlFilter } from '../lib/image-api'
 
 interface ProviderFormData {
   apiKey: string
@@ -29,6 +32,12 @@ export default function ImageSettings() {
   const [saving, setSaving] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+
+  // URL Filters state
+  const [urlFilters, setUrlFilters] = useState<ImageUrlFilter[]>([])
+  const [newFilterPattern, setNewFilterPattern] = useState('')
+  const [newFilterDescription, setNewFilterDescription] = useState('')
+  const [addingFilter, setAddingFilter] = useState(false)
 
   // Form data for each provider
   const [pexelsForm, setPexelsForm] = useState<ProviderFormData>({
@@ -71,12 +80,14 @@ export default function ImageSettings() {
     try {
       setLoading(true)
       setError(null)
-      const [providersData, usageData] = await Promise.all([
+      const [providersData, usageData, filtersData] = await Promise.all([
         imageClient.getProviders(),
-        imageClient.getUsageStats()
+        imageClient.getUsageStats(),
+        imageClient.getUrlFilters()
       ])
       setProviders(providersData)
       setUsage(usageData)
+      setUrlFilters(filtersData)
 
       // Update form data based on loaded providers
       const pexelsProvider = providersData.find(p => p.provider === 'pexels')
@@ -192,6 +203,49 @@ export default function ImageSettings() {
       console.error(err)
     } finally {
       setSaving(null)
+    }
+  }
+
+  // URL Filter handlers
+  const handleAddFilter = async () => {
+    if (!newFilterPattern.trim()) {
+      setError('Filter pattern cannot be empty')
+      return
+    }
+
+    setAddingFilter(true)
+    setError(null)
+    try {
+      await imageClient.addUrlFilter(newFilterPattern.trim(), newFilterDescription.trim() || undefined)
+      setSuccess('URL filter added successfully')
+      setNewFilterPattern('')
+      setNewFilterDescription('')
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to add URL filter')
+    } finally {
+      setAddingFilter(false)
+    }
+  }
+
+  const handleRemoveFilter = async (filterId: string) => {
+    setError(null)
+    try {
+      await imageClient.removeUrlFilter(filterId)
+      setSuccess('URL filter removed successfully')
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to remove URL filter')
+    }
+  }
+
+  const handleToggleFilter = async (filterId: string) => {
+    setError(null)
+    try {
+      await imageClient.toggleUrlFilter(filterId)
+      await loadData()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to toggle URL filter')
     }
   }
 
@@ -751,6 +805,145 @@ export default function ImageSettings() {
               )}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* URL Filters Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            Image URL Filters
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Filter out unwanted images by URL pattern. Images matching these patterns will be excluded from search results.
+          </p>
+        </div>
+
+        {/* Add New Filter */}
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Add New Filter</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                URL Pattern *
+              </label>
+              <input
+                type="text"
+                value={newFilterPattern}
+                onChange={(e) => setNewFilterPattern(e.target.value)}
+                placeholder="e.g., shutterstock.com, gettyimages.com"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Enter a domain or URL pattern to filter (case-insensitive)
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Description (optional)
+              </label>
+              <input
+                type="text"
+                value={newFilterDescription}
+                onChange={(e) => setNewFilterDescription(e.target.value)}
+                placeholder="e.g., Watermarked stock photos"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <button
+              onClick={handleAddFilter}
+              disabled={addingFilter || !newFilterPattern.trim()}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            >
+              {addingFilter ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Add Filter
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Common Presets */}
+        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">💡 Common Filters</h3>
+          <p className="text-xs text-blue-700 dark:text-blue-400 mb-3">
+            Click to add common watermarked image sites:
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {['shutterstock.com', 'gettyimages.com', 'istockphoto.com', 'depositphotos.com', 'dreamstime.com'].map((pattern) => (
+              <button
+                key={pattern}
+                onClick={() => setNewFilterPattern(pattern)}
+                className="px-3 py-1 text-xs bg-white dark:bg-gray-700 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+              >
+                {pattern}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Active Filters List */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+            Active Filters ({urlFilters.filter(f => f.isActive).length})
+          </h3>
+          {urlFilters.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <Filter className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No URL filters configured</p>
+              <p className="text-sm">Add filters above to exclude unwanted images</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {urlFilters.map((filter) => (
+                <div
+                  key={filter.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    filter.isActive
+                      ? 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600'
+                      : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60'
+                  }`}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <code className="text-sm font-mono text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                        {filter.pattern}
+                      </code>
+                      {!filter.isActive && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">(Inactive)</span>
+                      )}
+                    </div>
+                    {filter.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{filter.description}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleToggleFilter(filter.id)}
+                      className="px-3 py-1 text-xs text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      {filter.isActive ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      onClick={() => handleRemoveFilter(filter.id)}
+                      className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                      title="Remove filter"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

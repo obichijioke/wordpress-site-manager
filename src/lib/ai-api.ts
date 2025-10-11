@@ -33,6 +33,7 @@ export interface AISettings {
   translateModel: string
   altTextModel: string
   outlineModel: string
+  metadataModel: string
   createdAt: string
   updatedAt: string
 }

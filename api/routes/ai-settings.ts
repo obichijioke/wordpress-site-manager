@@ -40,7 +40,8 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
           keywordsModel: 'gpt-3.5-turbo',
           translateModel: 'gpt-4-turbo',
           altTextModel: 'gpt-3.5-turbo',
-          outlineModel: 'gpt-4-turbo'
+          outlineModel: 'gpt-4-turbo',
+          metadataModel: 'gpt-3.5-turbo'
         }
       })
     }
@@ -111,7 +112,8 @@ router.put('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
       keywordsModel,
       translateModel,
       altTextModel,
-      outlineModel
+      outlineModel,
+      metadataModel
     } = req.body
 
     // Prepare update data
@@ -138,6 +140,7 @@ router.put('/', authenticateToken, async (req: AuthenticatedRequest, res: Respon
     if (translateModel) updateData.translateModel = translateModel
     if (altTextModel) updateData.altTextModel = altTextModel
     if (outlineModel) updateData.outlineModel = outlineModel
+    if (metadataModel) updateData.metadataModel = metadataModel
 
     // Update or create settings
     const settings = await prisma.aISettings.upsert({

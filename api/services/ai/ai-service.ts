@@ -94,10 +94,26 @@ export class AIService {
       keywords: settings.keywordsModel,
       translate: settings.translateModel,
       'alt-text': settings.altTextModel,
-      outline: settings.outlineModel
+      outline: settings.outlineModel,
+      metadata: (settings as any).metadataModel || settings.generateModel || 'gpt-3.5-turbo'
     }
 
-    return featureModelMap[feature] || 'gpt-3.5-turbo'
+    let model = featureModelMap[feature] || settings.generateModel || 'gpt-3.5-turbo'
+
+    // If the default model is gpt-3.5-turbo but user has no OpenAI key, try to use a custom model
+    if (model === 'gpt-3.5-turbo' && !settings.openaiApiKey) {
+      // Try to find an active custom model as fallback
+      const customModel = await prisma.customModel.findFirst({
+        where: { userId, isActive: true },
+        orderBy: { createdAt: 'desc' }
+      })
+
+      if (customModel) {
+        model = customModel.identifier
+      }
+    }
+
+    return model
   }
 
   /**
@@ -442,6 +458,59 @@ Content:
 ${contentPreview}${content.length > 2000 ? '...' : ''}`
       }
     ], { maxTokens: 300, temperature: 0.5 })
+  }
+
+  /**
+   * Generate article metadata (categories, tags, SEO)
+   */
+  static async generateArticleMetadata(
+    userId: string,
+    title: string,
+    content: string
+  ): Promise<AIResponse> {
+    const contentPreview = content.substring(0, 3000)
+
+    return this.chatCompletion(userId, 'metadata', [
+      {
+        role: 'system',
+        content: `You are an expert at analyzing article content and generating comprehensive metadata for WordPress publishing.
+
+Your task: Analyze the article and generate structured metadata including categories, tags, and SEO information.
+
+REQUIREMENTS:
+1. Categories: 2-4 broad topic categories that best describe the article's main themes
+2. Tags: 5-10 specific keywords or phrases that capture key topics, entities, and concepts
+3. SEO Description: A compelling 150-160 character meta description optimized for search engines
+4. SEO Keywords: 5-8 primary keywords/phrases for SEO optimization
+
+GUIDELINES:
+- Categories should be general topics (e.g., "Technology", "Health & Wellness", "Entertainment")
+- Tags should be specific (e.g., "artificial intelligence", "remote work tips", "celebrity news")
+- SEO description should be engaging, include primary keywords, and encourage clicks
+- SEO keywords should be search-friendly phrases people might use to find this content
+- Extract actual names, brands, locations mentioned in the article for tags
+- Consider the article's tone, audience, and purpose
+
+Return ONLY a JSON object with this exact structure:
+{
+  "categories": ["Category 1", "Category 2"],
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "seoDescription": "Compelling meta description here...",
+  "seoKeywords": ["keyword1", "keyword2", "keyword3"]
+}`
+      },
+      {
+        role: 'user',
+        content: `Generate comprehensive metadata for this article:
+
+Title: ${title || 'Untitled'}
+
+Content:
+${contentPreview}${content.length > 3000 ? '...' : ''}
+
+Return the metadata as a JSON object.`
+      }
+    ], { maxTokens: 500, temperature: 0.7 })
   }
 }
 

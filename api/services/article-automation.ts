@@ -3,7 +3,9 @@
  * Orchestrates article generation from RSS feeds or topics
  */
 
+import axios from 'axios'
 import { prisma } from '../lib/prisma'
+import { decryptPassword } from '../lib/auth'
 import { RSSParserService, RSSFeedItem } from './rss-parser'
 import { AIService } from './ai/ai-service'
 
@@ -21,7 +23,6 @@ export interface GenerateFromRSSOptions {
   siteId: string
   rssFeedId: string
   articleUrl: string
-  rewriteStyle?: 'summary' | 'expand' | 'rewrite'
 }
 
 export interface GeneratedArticle {
@@ -119,10 +120,10 @@ Return only the article content in HTML format, without any meta-commentary.`
   }
 
   /**
-   * Generate article from RSS feed item
+   * Generate article from RSS feed item using Research API
    */
   static async generateFromRSS(options: GenerateFromRSSOptions): Promise<GeneratedArticle> {
-    const { userId, rssFeedId, articleUrl, rewriteStyle = 'rewrite' } = options
+    const { userId, rssFeedId, articleUrl } = options
 
     try {
       // Get the RSS feed
@@ -141,169 +142,63 @@ Return only the article content in HTML format, without any meta-commentary.`
         throw new Error('Article not found in RSS feed')
       }
 
-      // Generate content based on rewrite style
-      let generatedContent: string
-      let contentResponse: any
+      // Use the article title as the topic for Research API
+      const topic = article.title
 
-      switch (rewriteStyle) {
-        case 'summary':
-          contentResponse = await this.generateSummaryArticle(userId, article)
-          break
-        case 'expand':
-          contentResponse = await this.generateExpandedArticle(userId, article)
-          break
-        case 'rewrite':
-        default:
-          contentResponse = await this.generateRewrittenArticle(userId, article)
-          break
+      // Get user's research settings
+      const settings = await prisma.researchSettings.findUnique({
+        where: { userId }
+      })
+
+      if (!settings || !settings.isEnabled) {
+        throw new Error('Research API not configured or disabled. Please configure it in Settings > Research API.')
       }
 
-      generatedContent = contentResponse.content
+      // Prepare headers for Research API
+      const headers: any = {
+        'Content-Type': 'application/json'
+      }
 
-      // Generate a new title
-      const titleResponse = await AIService.generateTitles(userId, generatedContent, 1)
-      const title = titleResponse.content.split('\n')[0].replace(/^(Title:|#|\d+\.)\s*/i, '').trim()
+      if (settings.bearerToken) {
+        const token = decryptPassword(settings.bearerToken)
+        headers['Authorization'] = `Bearer ${token}`
+      }
 
-      // Generate an excerpt
-      const excerptResponse = await AIService.summarize(userId, generatedContent, 150)
-      const excerpt = excerptResponse.content
+      // Call Research API with the article title as context
+      const response = await axios.post(
+        settings.apiUrl,
+        { context: topic },
+        {
+          headers,
+          timeout: 60000,
+          validateStatus: (status) => status < 500
+        }
+      )
 
-      // Calculate total tokens and cost
-      const totalTokens = contentResponse.tokensUsed + 
-                         titleResponse.tokensUsed + 
-                         excerptResponse.tokensUsed
+      if (response.status !== 200) {
+        throw new Error(`Research API returned status ${response.status}`)
+      }
 
-      const totalCost = contentResponse.cost + 
-                       titleResponse.cost + 
-                       excerptResponse.cost
+      const { title, excerpt, content } = response.data.output
 
+      if (!title || !excerpt || !content) {
+        throw new Error('Invalid response from Research API. Expected: { title, excerpt, content }')
+      }
+
+      // Return the generated article
+      // Note: Research API doesn't track tokens/cost, so we return 0
       return {
         title,
-        content: generatedContent,
+        content,
         excerpt,
-        aiModel: contentResponse.model,
-        tokensUsed: totalTokens,
-        cost: totalCost
+        aiModel: 'Research API',
+        tokensUsed: 0,
+        cost: 0
       }
     } catch (error: any) {
       throw new Error(`Failed to generate article from RSS: ${error.message}`)
     }
   }
 
-  /**
-   * Generate a summary-style article from RSS content
-   */
-  private static async generateSummaryArticle(userId: string, article: RSSFeedItem) {
-    const prompt = `Create a concise summary article based on this source:
-
-Title: ${article.title}
-Content: ${article.content || article.description}
-
-Requirements:
-- Write a well-structured summary (300-500 words)
-- Capture the key points and main ideas
-- Use proper HTML formatting
-- Make it engaging and readable
-- Do not copy text verbatim - rewrite in your own words
-
-Return only the article content in HTML format.`
-
-    return await AIService.chatCompletion(
-      userId,
-      'generate',
-      [
-        {
-          role: 'system',
-          content: 'You are a professional content writer specializing in creating concise, informative summaries.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      {
-        maxTokens: 1000,
-        temperature: 0.7
-      }
-    )
-  }
-
-  /**
-   * Generate an expanded article from RSS content
-   */
-  private static async generateExpandedArticle(userId: string, article: RSSFeedItem) {
-    const prompt = `Create an expanded, in-depth article based on this source:
-
-Title: ${article.title}
-Content: ${article.content || article.description}
-
-Requirements:
-- Expand on the ideas with additional context and details
-- Length: 1000-1500 words
-- Add relevant examples and explanations
-- Use proper HTML formatting with headings and paragraphs
-- Make it comprehensive and informative
-- Do not copy text verbatim - rewrite and expand in your own words
-
-Return only the article content in HTML format.`
-
-    return await AIService.chatCompletion(
-      userId,
-      'generate',
-      [
-        {
-          role: 'system',
-          content: 'You are a professional content writer specializing in creating comprehensive, detailed articles.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      {
-        maxTokens: 2500,
-        temperature: 0.8
-      }
-    )
-  }
-
-  /**
-   * Generate a rewritten article from RSS content
-   */
-  private static async generateRewrittenArticle(userId: string, article: RSSFeedItem) {
-    const prompt = `Rewrite this article in a fresh, original way:
-
-Title: ${article.title}
-Content: ${article.content || article.description}
-
-Requirements:
-- Completely rewrite the content while preserving the core information
-- Length: similar to the original (800-1200 words)
-- Use different structure and phrasing
-- Use proper HTML formatting
-- Make it engaging and well-written
-- Do not copy text verbatim - create an original version
-
-Return only the article content in HTML format.`
-
-    return await AIService.chatCompletion(
-      userId,
-      'generate',
-      [
-        {
-          role: 'system',
-          content: 'You are a professional content writer specializing in rewriting and repurposing content.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      {
-        maxTokens: 2000,
-        temperature: 0.8
-      }
-    )
-  }
 }
 

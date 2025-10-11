@@ -61,7 +61,8 @@ export default function AISettings() {
     keywordsModel: 'gpt-3.5-turbo',
     translateModel: 'gpt-4-turbo',
     altTextModel: 'gpt-3.5-turbo',
-    outlineModel: 'gpt-4-turbo'
+    outlineModel: 'gpt-4-turbo',
+    metadataModel: 'gpt-3.5-turbo'
   })
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -99,7 +100,8 @@ export default function AISettings() {
         keywordsModel: settingsData.settings.keywordsModel,
         translateModel: settingsData.settings.translateModel,
         altTextModel: settingsData.settings.altTextModel,
-        outlineModel: settingsData.settings.outlineModel
+        outlineModel: settingsData.settings.outlineModel,
+        metadataModel: settingsData.settings.metadataModel
       })
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to load settings')

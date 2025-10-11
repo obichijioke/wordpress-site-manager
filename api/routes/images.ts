@@ -310,5 +310,76 @@ router.get('/proxy', authenticateToken, async (req, res) => {
   }
 })
 
+/**
+ * GET /api/images/url-filters
+ * Get all URL filters for the current user
+ */
+router.get('/url-filters', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user!.id
+    const filters = await ImageService.getUrlFiltersForUser(userId)
+    res.json(filters)
+  } catch (error: any) {
+    console.error('Get URL filters error:', error)
+    res.status(500).json({ error: error.message || 'Failed to get URL filters' })
+  }
+})
+
+/**
+ * POST /api/images/url-filters
+ * Add a new URL filter
+ */
+router.post('/url-filters', authenticateToken, async (req, res) => {
+  try {
+    const { pattern, description } = req.body
+    const userId = req.user!.id
+
+    // Validate required fields
+    if (!pattern || typeof pattern !== 'string' || pattern.trim().length === 0) {
+      return res.status(400).json({ error: 'Filter pattern is required and must be a non-empty string' })
+    }
+
+    await ImageService.addUrlFilter(userId, pattern.trim(), description?.trim())
+    res.json({ success: true, message: 'URL filter added successfully' })
+  } catch (error: any) {
+    console.error('Add URL filter error:', error)
+    res.status(400).json({ error: error.message || 'Failed to add URL filter' })
+  }
+})
+
+/**
+ * DELETE /api/images/url-filters/:filterId
+ * Remove a URL filter
+ */
+router.delete('/url-filters/:filterId', authenticateToken, async (req, res) => {
+  try {
+    const { filterId } = req.params
+    const userId = req.user!.id
+
+    await ImageService.removeUrlFilter(userId, filterId)
+    res.json({ success: true, message: 'URL filter removed successfully' })
+  } catch (error: any) {
+    console.error('Remove URL filter error:', error)
+    res.status(400).json({ error: error.message || 'Failed to remove URL filter' })
+  }
+})
+
+/**
+ * PATCH /api/images/url-filters/:filterId/toggle
+ * Toggle a URL filter active/inactive
+ */
+router.patch('/url-filters/:filterId/toggle', authenticateToken, async (req, res) => {
+  try {
+    const { filterId } = req.params
+    const userId = req.user!.id
+
+    await ImageService.toggleUrlFilter(userId, filterId)
+    res.json({ success: true, message: 'URL filter toggled successfully' })
+  } catch (error: any) {
+    console.error('Toggle URL filter error:', error)
+    res.status(400).json({ error: error.message || 'Failed to toggle URL filter' })
+  }
+})
+
 export default router
 
