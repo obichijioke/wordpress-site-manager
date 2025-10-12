@@ -8,6 +8,7 @@ import { prisma } from '../lib/prisma'
 import { authenticateToken, AuthenticatedRequest, decryptPassword, encryptPassword } from '../lib/auth'
 import { RSSParserService } from '../services/rss-parser'
 import { ArticleAutomationService } from '../services/article-automation'
+import { ArticleGenerationService } from '../services/article-generation-service'
 import axios from 'axios'
 import https from 'https'
 
@@ -280,7 +281,7 @@ router.post('/generate-from-topic', authenticateToken, async (req: Authenticated
  */
 router.post('/generate-from-rss', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { siteId, rssFeedId, articleUrl, rewriteStyle } = req.body
+    const { siteId, rssFeedId, articleUrl } = req.body
 
     if (!siteId || !rssFeedId || !articleUrl) {
       res.status(400).json({ error: 'Site ID, RSS feed ID, and article URL are required' })
@@ -325,13 +326,12 @@ router.post('/generate-from-rss', authenticateToken, async (req: AuthenticatedRe
     })
 
     try {
-      // Generate the article
+      // Generate the article using Research API
       const article = await ArticleAutomationService.generateFromRSS({
         userId: req.user!.id,
         siteId,
         rssFeedId,
-        articleUrl,
-        rewriteStyle
+        articleUrl
       })
 
       // Update job with generated content
@@ -383,6 +383,160 @@ router.post('/generate-from-rss', authenticateToken, async (req: AuthenticatedRe
     res.status(500).json({ 
       error: 'Failed to generate article from RSS',
       message: error.message 
+    })
+  }
+})
+
+/**
+ * Generate and publish complete article automatically
+ * POST /api/article-automation/generate-and-publish
+ */
+router.post('/generate-and-publish', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { siteId, rssFeedId, articleTitle, articleUrl, publishStatus = 'draft' } = req.body
+
+    if (!siteId || !articleTitle) {
+      res.status(400).json({ error: 'Site ID and article title are required' })
+      return
+    }
+
+    // Verify site ownership
+    const site = await prisma.site.findFirst({
+      where: { id: siteId, userId: req.user!.id }
+    })
+
+    if (!site) {
+      res.status(404).json({ error: 'Site not found' })
+      return
+    }
+
+    // Verify RSS feed ownership if provided
+    if (rssFeedId) {
+      const rssFeed = await prisma.rSSFeed.findFirst({
+        where: { id: rssFeedId, userId: req.user!.id }
+      })
+
+      if (!rssFeed) {
+        res.status(404).json({ error: 'RSS feed not found' })
+        return
+      }
+    }
+
+    // Create automation job
+    const job = await prisma.automationJob.create({
+      data: {
+        userId: req.user!.id,
+        siteId,
+        sourceType: rssFeedId ? 'RSS' : 'TOPIC',
+        rssFeedId,
+        sourceUrl: articleUrl,
+        sourceTitle: articleTitle,
+        status: 'GENERATING'
+      }
+    })
+
+    try {
+      // Step 1-5: Generate complete article with metadata and images
+      console.log(`[Job ${job.id}] Starting automated article generation...`)
+      const articleData = await ArticleGenerationService.generateCompleteArticle({
+        userId: req.user!.id,
+        siteId,
+        rssFeedId,
+        articleTitle,
+        articleUrl
+      })
+
+      // Update job with generated data
+      await prisma.automationJob.update({
+        where: { id: job.id },
+        data: {
+          status: 'GENERATED',
+          generatedTitle: articleData.title,
+          generatedContent: articleData.content,
+          generatedExcerpt: articleData.excerpt,
+          categories: JSON.stringify(articleData.categories),
+          tags: JSON.stringify(articleData.tags),
+          seoDescription: articleData.seoDescription,
+          seoKeywords: JSON.stringify(articleData.seoKeywords),
+          featuredImageUrl: articleData.featuredImageUrl,
+          inlineImages: JSON.stringify(articleData.inlineImages),
+          tokensUsed: articleData.tokensUsed,
+          aiCost: articleData.cost
+        }
+      })
+
+      // Step 6: Publish to WordPress
+      console.log(`[Job ${job.id}] Publishing to WordPress...`)
+      console.log(`[Job ${job.id}] Site ID: ${siteId}`)
+      console.log(`[Job ${job.id}] Publish status: ${publishStatus}`)
+      console.log(`[Job ${job.id}] Article title: ${articleData.title}`)
+
+      await prisma.automationJob.update({
+        where: { id: job.id },
+        data: { status: 'PUBLISHING' }
+      })
+
+      console.log(`[Job ${job.id}] Calling publishToWordPress...`)
+      const publishResult = await ArticleGenerationService.publishToWordPress(
+        siteId,
+        articleData,
+        publishStatus as 'draft' | 'publish'
+      )
+      console.log(`[Job ${job.id}] Publish result:`, publishResult)
+
+      // Update job with WordPress post ID
+      const updatedJob = await prisma.automationJob.update({
+        where: { id: job.id },
+        data: {
+          status: 'PUBLISHED',
+          wpPostId: publishResult.wpPostId,
+          publishedAt: new Date()
+        },
+        include: {
+          rssFeed: true,
+          site: {
+            select: {
+              id: true,
+              name: true,
+              url: true
+            }
+          }
+        }
+      })
+
+      console.log(`[Job ${job.id}] Successfully published to WordPress (Post ID: ${publishResult.wpPostId})`)
+
+      res.json({
+        success: true,
+        job: updatedJob,
+        wpPostId: publishResult.wpPostId,
+        wpLink: publishResult.link,
+        message: 'Article generated and published successfully'
+      })
+
+    } catch (error: any) {
+      console.error(`[Job ${job.id}] Generation/publishing failed:`, error)
+
+      // Update job with error
+      await prisma.automationJob.update({
+        where: { id: job.id },
+        data: {
+          status: 'FAILED',
+          errorMessage: error.message
+        }
+      })
+
+      res.status(500).json({
+        error: 'Failed to generate and publish article',
+        message: error.message,
+        jobId: job.id
+      })
+    }
+  } catch (error: any) {
+    console.error('Generate and publish error:', error)
+    res.status(500).json({
+      error: 'Failed to process request',
+      message: error.message
     })
   }
 })

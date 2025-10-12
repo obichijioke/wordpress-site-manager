@@ -17,9 +17,10 @@ export default function RSSArticleSelector({ siteId, onSuccess, onError }: RSSAr
   const [loadingFeeds, setLoadingFeeds] = useState(false)
   const [loadingItems, setLoadingItems] = useState(false)
   const [generating, setGenerating] = useState(false)
-  const [rewriteStyle, setRewriteStyle] = useState<'summary' | 'expand' | 'rewrite'>('rewrite')
   const [generatedJob, setGeneratedJob] = useState<AutomationJobWithDetails | null>(null)
   const [preview, setPreview] = useState<{ title: string; content: string; excerpt: string } | null>(null)
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'publish'>('draft')
+  const [autoPublish, setAutoPublish] = useState(true)
 
   useEffect(() => {
     loadFeeds()
@@ -62,7 +63,7 @@ export default function RSSArticleSelector({ siteId, onSuccess, onError }: RSSAr
     }
   }
 
-  const handleGenerateFromArticle = async (articleUrl: string) => {
+  const handleGenerateFromArticle = async (articleUrl: string, articleTitle: string) => {
     if (!selectedFeedId) {
       onError('Please select an RSS feed')
       return
@@ -73,16 +74,33 @@ export default function RSSArticleSelector({ siteId, onSuccess, onError }: RSSAr
     setPreview(null)
 
     try {
-      const response = await automationClient.generateFromRSS({
-        siteId,
-        rssFeedId: selectedFeedId,
-        articleUrl,
-        rewriteStyle
-      })
+      if (autoPublish) {
+        // Generate and publish in one step (with metadata and images)
+        const response = await automationClient.generateAndPublish({
+          siteId,
+          rssFeedId: selectedFeedId,
+          articleTitle,
+          articleUrl,
+          publishStatus
+        })
 
-      setGeneratedJob(response.job)
-      setPreview(response.preview || null)
-      onSuccess('Article generated successfully!')
+        onSuccess(`Article generated and published successfully! WordPress Post ID: ${response.wpPostId}`)
+
+        // Optionally load the job details to show preview
+        const jobResponse = await automationClient.getAutomationJob(response.job.id)
+        setGeneratedJob(jobResponse.job)
+      } else {
+        // Generate only (old behavior)
+        const response = await automationClient.generateFromRSS({
+          siteId,
+          rssFeedId: selectedFeedId,
+          articleUrl
+        })
+
+        setGeneratedJob(response.job)
+        setPreview(response.preview || null)
+        onSuccess('Article generated successfully using Research API!')
+      }
     } catch (err: any) {
       onError(err.response?.data?.message || 'Failed to generate article')
     } finally {
@@ -168,19 +186,56 @@ export default function RSSArticleSelector({ siteId, onSuccess, onError }: RSSAr
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Rewrite Style
-            </label>
-            <select
-              value={rewriteStyle}
-              onChange={(e) => setRewriteStyle(e.target.value as any)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="summary">Summary (300-500 words)</option>
-              <option value="rewrite">Rewrite (similar length)</option>
-              <option value="expand">Expand (1000-1500 words)</option>
-            </select>
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Sparkles className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+                  Using Research API
+                </h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Articles are generated using your configured Research API. The RSS article title will be used as the topic for content generation.
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                  Configure Research API in Settings → Research API
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Auto-publish options */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="autoPublish"
+                checked={autoPublish}
+                onChange={(e) => setAutoPublish(e.target.checked)}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              />
+              <label htmlFor="autoPublish" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Auto-publish to WordPress (includes metadata & images)
+              </label>
+            </div>
+
+            {autoPublish && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Publish Status
+                </label>
+                <select
+                  value={publishStatus}
+                  onChange={(e) => setPublishStatus(e.target.value as 'draft' | 'publish')}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="draft">Save as Draft</option>
+                  <option value="publish">Publish Immediately</option>
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {autoPublish ? 'Article will be generated with metadata, images, and published to WordPress automatically.' : 'Article will be generated only. You can review and publish it manually.'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -232,19 +287,19 @@ export default function RSSArticleSelector({ siteId, onSuccess, onError }: RSSAr
                     </div>
                   </div>
                   <button
-                    onClick={() => handleGenerateFromArticle(item.link)}
+                    onClick={() => handleGenerateFromArticle(item.link, item.title)}
                     disabled={generating}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
                   >
                     {generating ? (
                       <>
                         <Loader className="h-4 w-4 animate-spin" />
-                        Generating...
+                        {autoPublish ? 'Publishing...' : 'Generating...'}
                       </>
                     ) : (
                       <>
                         <Sparkles className="h-4 w-4" />
-                        Generate
+                        {autoPublish ? 'Generate & Publish' : 'Generate'}
                       </>
                     )}
                   </button>

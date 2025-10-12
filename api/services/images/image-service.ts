@@ -9,6 +9,51 @@ import { ImageSearchParams, ImageSearchResponse, ImageProviderConfig, UsageStats
 
 export class ImageService {
   /**
+   * Get active URL filters for a user
+   */
+  private static async getUrlFilters(userId: string): Promise<string[]> {
+    const filters = await prisma.imageUrlFilter.findMany({
+      where: {
+        userId,
+        isActive: true,
+      },
+      select: {
+        pattern: true,
+      },
+    })
+
+    return filters.map((f) => f.pattern.toLowerCase())
+  }
+
+  /**
+   * Filter out images that match URL filter patterns
+   */
+  private static filterImagesByUrl(
+    images: ImageSearchResponse[],
+    urlFilters: string[]
+  ): ImageSearchResponse[] {
+    if (urlFilters.length === 0) {
+      return images
+    }
+
+    return images.map((response) => ({
+      ...response,
+      results: response.results.filter((image) => {
+        const imageUrl = image.url.toLowerCase()
+
+        // Check if image URL matches any filter pattern
+        const isFiltered = urlFilters.some((pattern) => imageUrl.includes(pattern))
+
+        if (isFiltered) {
+          console.log(`🚫 Filtered out image from ${image.source}: ${image.url} (matched pattern)`)
+        }
+
+        return !isFiltered
+      }),
+    }))
+  }
+
+  /**
    * Search for images across enabled providers
    */
   static async searchImages(
@@ -27,6 +72,12 @@ export class ImageService {
 
     if (enabledProviders.length === 0) {
       throw new Error('No image providers configured. Please add an API key in Settings.')
+    }
+
+    // Get URL filters for user
+    const urlFilters = await this.getUrlFilters(userId)
+    if (urlFilters.length > 0) {
+      console.log(`📋 Applying ${urlFilters.length} URL filter(s): ${urlFilters.join(', ')}`)
     }
 
     // Search across all enabled providers in parallel
@@ -49,7 +100,10 @@ export class ImageService {
       throw new Error('All image providers failed. Please check your API keys and try again.')
     }
 
-    return successfulResults
+    // Apply URL filters to results
+    const filteredResults = this.filterImagesByUrl(successfulResults, urlFilters)
+
+    return filteredResults
   }
 
   /**
@@ -154,6 +208,102 @@ export class ImageService {
       byProvider,
       recentSearches,
     }
+  }
+
+  /**
+   * Get all URL filters for a user
+   */
+  static async getUrlFiltersForUser(userId: string) {
+    const filters = await prisma.imageUrlFilter.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    return filters.map((f) => ({
+      id: f.id,
+      pattern: f.pattern,
+      description: f.description,
+      isActive: f.isActive,
+      createdAt: f.createdAt,
+    }))
+  }
+
+  /**
+   * Add a new URL filter
+   */
+  static async addUrlFilter(
+    userId: string,
+    pattern: string,
+    description?: string
+  ): Promise<void> {
+    // Validate pattern
+    if (!pattern || pattern.trim().length === 0) {
+      throw new Error('Filter pattern cannot be empty')
+    }
+
+    // Check if pattern already exists for this user
+    const existing = await prisma.imageUrlFilter.findFirst({
+      where: {
+        userId,
+        pattern: pattern.trim().toLowerCase(),
+      },
+    })
+
+    if (existing) {
+      throw new Error('This filter pattern already exists')
+    }
+
+    await prisma.imageUrlFilter.create({
+      data: {
+        userId,
+        pattern: pattern.trim().toLowerCase(),
+        description: description?.trim() || null,
+        isActive: true,
+      },
+    })
+  }
+
+  /**
+   * Remove a URL filter
+   */
+  static async removeUrlFilter(userId: string, filterId: string): Promise<void> {
+    // Verify the filter belongs to the user
+    const filter = await prisma.imageUrlFilter.findFirst({
+      where: {
+        id: filterId,
+        userId,
+      },
+    })
+
+    if (!filter) {
+      throw new Error('Filter not found')
+    }
+
+    await prisma.imageUrlFilter.delete({
+      where: { id: filterId },
+    })
+  }
+
+  /**
+   * Toggle a URL filter active/inactive
+   */
+  static async toggleUrlFilter(userId: string, filterId: string): Promise<void> {
+    // Verify the filter belongs to the user
+    const filter = await prisma.imageUrlFilter.findFirst({
+      where: {
+        id: filterId,
+        userId,
+      },
+    })
+
+    if (!filter) {
+      throw new Error('Filter not found')
+    }
+
+    await prisma.imageUrlFilter.update({
+      where: { id: filterId },
+      data: { isActive: !filter.isActive },
+    })
   }
 
   /**
