@@ -75,11 +75,18 @@ export class RSSParserService {
   private static parseRSS2(channel: any): RSSFeedData {
     const items = Array.isArray(channel.item) ? channel.item : [channel.item].filter(Boolean)
 
+    console.log(`[RSSParser] Parsing RSS 2.0 feed. Raw items count: ${items.length}`)
+    console.log(`[RSSParser] Is array: ${Array.isArray(channel.item)}`)
+
+    const parsedItems = items.map((item: any) => this.parseRSSItem(item))
+
+    console.log(`[RSSParser] Parsed ${parsedItems.length} items from RSS 2.0 feed`)
+
     return {
       title: this.extractText(channel.title),
       description: this.extractText(channel.description),
       link: this.extractText(channel.link),
-      items: items.map((item: any) => this.parseRSSItem(item))
+      items: parsedItems
     }
   }
 
@@ -89,11 +96,18 @@ export class RSSParserService {
   private static parseAtom(feed: any): RSSFeedData {
     const entries = Array.isArray(feed.entry) ? feed.entry : [feed.entry].filter(Boolean)
 
+    console.log(`[RSSParser] Parsing Atom feed. Raw entries count: ${entries.length}`)
+    console.log(`[RSSParser] Is array: ${Array.isArray(feed.entry)}`)
+
+    const parsedEntries = entries.map((entry: any) => this.parseAtomEntry(entry))
+
+    console.log(`[RSSParser] Parsed ${parsedEntries.length} entries from Atom feed`)
+
     return {
       title: this.extractText(feed.title),
       description: this.extractText(feed.subtitle || feed.description),
       link: this.extractAtomLink(feed.link),
-      items: entries.map((entry: any) => this.parseAtomEntry(entry))
+      items: parsedEntries
     }
   }
 

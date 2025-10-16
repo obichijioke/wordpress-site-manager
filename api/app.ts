@@ -20,6 +20,9 @@ import aiRoutes from './routes/ai.js'
 import aiSettingsRoutes from './routes/ai-settings.js'
 import imageRoutes from './routes/images.js'
 import articleAutomationRoutes from './routes/article-automation.js'
+import bulkOperationsRoutes from './routes/bulk-operations.js'
+import scheduledPostsRoutes from './routes/scheduled-posts.js'
+import automationSchedulesRoutes from './routes/automation-schedules.js'
 
 // for esm mode
 const __filename = fileURLToPath(import.meta.url)
@@ -49,6 +52,9 @@ app.use('/api/ai', aiRoutes)
 app.use('/api/ai-settings', aiSettingsRoutes)
 app.use('/api/images', imageRoutes)
 app.use('/api/article-automation', articleAutomationRoutes)
+app.use('/api/bulk-operations', bulkOperationsRoutes)
+app.use('/api/scheduled-posts', scheduledPostsRoutes)
+app.use('/api/automation-schedules', automationSchedulesRoutes)
 
 /**
  * health

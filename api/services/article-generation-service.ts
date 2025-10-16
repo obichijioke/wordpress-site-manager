@@ -151,7 +151,7 @@ export class ArticleGenerationService {
       { context: topic },
       {
         headers,
-        timeout: 60000,
+        timeout: 300000, // 5 minutes timeout
         validateStatus: (status) => status < 500
       }
     )
@@ -679,7 +679,7 @@ export class ArticleGenerationService {
           'Content-Type': contentType,
           'Content-Disposition': `attachment; filename="${filename}"`
         },
-        timeout: 60000,
+        timeout: 300000, // 5 minutes timeout
         httpsAgent: process.env.NODE_ENV === 'development' ?
           new https.Agent({ rejectUnauthorized: false }) : undefined
       }
