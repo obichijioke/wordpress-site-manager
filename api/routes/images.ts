@@ -1,6 +1,6 @@
-import express from 'express'
+import express, { Response } from 'express'
 import axios from 'axios'
-import { authenticateToken } from '../lib/auth.js'
+import { authenticateToken, AuthenticatedRequest } from '../lib/auth.js'
 import { ImageService } from '../services/images/image-service.js'
 import { AIService } from '../services/ai/ai-service.js'
 
@@ -10,7 +10,7 @@ const router = express.Router()
  * POST /api/images/suggest-search-terms
  * Generate AI-powered image search term suggestions based on article content
  */
-router.post('/suggest-search-terms', authenticateToken, async (req, res) => {
+router.post('/suggest-search-terms', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { title, content } = req.body
     const userId = req.user!.id
@@ -71,7 +71,7 @@ router.post('/suggest-search-terms', authenticateToken, async (req, res) => {
  * POST /api/images/search
  * Search for images across enabled providers
  */
-router.post('/search', authenticateToken, async (req, res) => {
+router.post('/search', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { query, page, perPage, orientation, color, providers } = req.body
     const userId = req.user!.id
@@ -112,7 +112,7 @@ router.post('/search', authenticateToken, async (req, res) => {
  * GET /api/images/providers
  * Get user's image provider configurations
  */
-router.get('/providers', authenticateToken, async (req, res) => {
+router.get('/providers', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id
     const providers = await ImageService.getEnabledProviders(userId)
@@ -127,12 +127,12 @@ router.get('/providers', authenticateToken, async (req, res) => {
  * POST /api/images/providers
  * Save or update an image provider configuration
  */
-router.post('/providers', authenticateToken, async (req, res) => {
+router.post('/providers', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { provider, apiKey, isEnabled } = req.body
-    const userId = req.user?.id
+    const userId = req.user!.id
 
-    // Validate userId from token
+    // Validate required fields
     if (!userId) {
       console.error('Save provider error: userId is missing from token')
       return res.status(401).json({ error: 'Authentication failed: userId not found' })
@@ -164,7 +164,7 @@ router.post('/providers', authenticateToken, async (req, res) => {
  * POST /api/images/providers/:provider/test
  * Test if an API key is valid for a provider
  */
-router.post('/providers/:provider/test', authenticateToken, async (req, res) => {
+router.post('/providers/:provider/test', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { provider } = req.params
     const { apiKey } = req.body
@@ -189,7 +189,7 @@ router.post('/providers/:provider/test', authenticateToken, async (req, res) => 
  * GET /api/images/usage
  * Get usage statistics for the current user
  */
-router.get('/usage', authenticateToken, async (req, res) => {
+router.get('/usage', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id
     const stats = await ImageService.getUsageStats(userId)
@@ -204,7 +204,7 @@ router.get('/usage', authenticateToken, async (req, res) => {
  * POST /api/images/log
  * Log image usage when a user inserts an image into their content
  */
-router.post('/log', authenticateToken, async (req, res) => {
+router.post('/log', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { provider, query, imageUrl } = req.body
     const userId = req.user!.id
@@ -234,7 +234,7 @@ router.post('/log', authenticateToken, async (req, res) => {
  * DELETE /api/images/providers/:provider
  * Delete a provider configuration
  */
-router.delete('/providers/:provider', authenticateToken, async (req, res) => {
+router.delete('/providers/:provider', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { provider } = req.params
     const userId = req.user!.id
@@ -251,7 +251,7 @@ router.delete('/providers/:provider', authenticateToken, async (req, res) => {
  * GET /api/images/proxy
  * Proxy endpoint to download images from external providers (avoids CORS issues)
  */
-router.get('/proxy', authenticateToken, async (req, res) => {
+router.get('/proxy', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { url } = req.query
 
@@ -314,7 +314,7 @@ router.get('/proxy', authenticateToken, async (req, res) => {
  * GET /api/images/url-filters
  * Get all URL filters for the current user
  */
-router.get('/url-filters', authenticateToken, async (req, res) => {
+router.get('/url-filters', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user!.id
     const filters = await ImageService.getUrlFiltersForUser(userId)
@@ -329,7 +329,7 @@ router.get('/url-filters', authenticateToken, async (req, res) => {
  * POST /api/images/url-filters
  * Add a new URL filter
  */
-router.post('/url-filters', authenticateToken, async (req, res) => {
+router.post('/url-filters', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { pattern, description } = req.body
     const userId = req.user!.id
@@ -351,7 +351,7 @@ router.post('/url-filters', authenticateToken, async (req, res) => {
  * DELETE /api/images/url-filters/:filterId
  * Remove a URL filter
  */
-router.delete('/url-filters/:filterId', authenticateToken, async (req, res) => {
+router.delete('/url-filters/:filterId', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { filterId } = req.params
     const userId = req.user!.id
@@ -368,7 +368,7 @@ router.delete('/url-filters/:filterId', authenticateToken, async (req, res) => {
  * PATCH /api/images/url-filters/:filterId/toggle
  * Toggle a URL filter active/inactive
  */
-router.patch('/url-filters/:filterId/toggle', authenticateToken, async (req, res) => {
+router.patch('/url-filters/:filterId/toggle', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { filterId } = req.params
     const userId = req.user!.id

@@ -4,8 +4,8 @@
  */
 
 import { Router, Response } from 'express'
-import { authenticateToken, AuthenticatedRequest } from '../lib/auth'
-import { AIService } from '../services/ai/ai-service'
+import { authenticateToken, AuthenticatedRequest } from '../lib/auth.js'
+import { AIService } from '../services/ai/ai-service.js'
 
 const router = Router()
 

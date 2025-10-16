@@ -1,5 +1,5 @@
 import cron from 'node-cron'
-import { ScheduledPostsService } from '../scheduled-posts-service'
+import { ScheduledPostsService } from '../scheduled-posts-service.js'
 
 export function startScheduledPostsCron() {
   // Run every minute

@@ -1,10 +1,10 @@
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/prisma.js'
 import cron, { type ScheduledTask } from 'node-cron'
 import { CronExpressionParser } from 'cron-parser'
 import cronstrue from 'cronstrue'
 import { fromZonedTime } from 'date-fns-tz'
-import { RSSParserService } from './rss-parser'
-import { ArticleGenerationService } from './article-generation-service'
+import { RSSParserService } from './rss-parser.js'
+import { ArticleGenerationService } from './article-generation-service.js'
 
 export interface CreateScheduleData {
   siteId: string

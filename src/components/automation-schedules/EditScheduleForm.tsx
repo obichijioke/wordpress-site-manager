@@ -35,7 +35,7 @@ export const EditScheduleForm: React.FC<EditScheduleFormProps> = ({
 
   const fetchRSSFeeds = async () => {
     try {
-      const response = await automationClient.getRSSFeeds({ siteId })
+      const response = await automationClient.getRSSFeeds()
       setRssFeeds(response.feeds || [])
     } catch (error) {
       console.error('Failed to fetch RSS feeds:', error)

@@ -3,9 +3,9 @@
  * Handle category creation, editing, and hierarchy management
  */
 import { Router, type Response } from 'express'
-import { prisma } from '../lib/prisma'
-import { authenticateToken, AuthenticatedRequest } from '../lib/auth'
-import { decryptPassword } from '../lib/auth'
+import { prisma } from '../lib/prisma.js'
+import { authenticateToken, AuthenticatedRequest } from '../lib/auth.js'
+import { decryptPassword } from '../lib/auth.js'
 import axios from 'axios'
 import https from 'https'
 

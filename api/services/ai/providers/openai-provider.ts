@@ -4,8 +4,8 @@
  */
 
 import OpenAI from 'openai'
-import { BaseAIProvider, ChatMessage, CompletionOptions } from './base-provider'
-import { AIResponse, calculateCost } from '../types'
+import { BaseAIProvider, ChatMessage, CompletionOptions } from './base-provider.js'
+import { AIResponse, calculateCost } from '../types.js'
 
 export class OpenAIProvider extends BaseAIProvider {
   private client: OpenAI

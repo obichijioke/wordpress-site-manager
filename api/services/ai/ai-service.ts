@@ -3,12 +3,12 @@
  * Routes requests to appropriate AI providers based on user settings
  */
 
-import { prisma } from '../../lib/prisma'
-import { decryptPassword } from '../../lib/auth'
-import { OpenAIProvider } from './providers/openai-provider'
-import { AnthropicProvider } from './providers/anthropic-provider'
-import { BaseAIProvider, ChatMessage } from './providers/base-provider'
-import { AIResponse, getModelInfo } from './types'
+import { prisma } from '../../lib/prisma.js'
+import { decryptPassword } from '../../lib/auth.js'
+import { OpenAIProvider } from './providers/openai-provider.js'
+import { AnthropicProvider } from './providers/anthropic-provider.js'
+import { BaseAIProvider, ChatMessage } from './providers/base-provider.js'
+import { AIResponse, getModelInfo } from './types.js'
 
 export class AIService {
   /**

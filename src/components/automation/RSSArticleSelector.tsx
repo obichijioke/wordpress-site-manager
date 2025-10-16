@@ -108,7 +108,7 @@ export default function RSSArticleSelector({ siteId, onSuccess, onError }: RSSAr
     }
   }
 
-  const handlePublish = async (publishData: { status: string; categories: number[]; tags: number[]; featuredMedia?: number }) => {
+  const handlePublish = async (publishData: { status: 'draft' | 'published'; categories: number[]; tags: number[]; featuredMedia?: number }) => {
     if (!generatedJob) return
 
     try {

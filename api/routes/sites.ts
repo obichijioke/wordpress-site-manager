@@ -4,9 +4,9 @@
  * Uses WordPress Application Passwords for secure authentication
  */
 import { Router, type Response } from 'express'
-import { prisma } from '../lib/prisma'
-import { authenticateToken, AuthenticatedRequest } from '../lib/auth'
-import { encryptPassword, decryptPassword } from '../lib/auth'
+import { prisma } from '../lib/prisma.js'
+import { authenticateToken, AuthenticatedRequest } from '../lib/auth.js'
+import { encryptPassword, decryptPassword } from '../lib/auth.js'
 import axios from 'axios'
 import https from 'https'
 

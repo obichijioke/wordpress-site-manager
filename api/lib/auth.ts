@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import { Request, Response, NextFunction } from 'express'
-import { prisma } from './prisma'
+import { prisma } from './prisma.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-production'
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'fallback-encryption-key-32-chars!!'

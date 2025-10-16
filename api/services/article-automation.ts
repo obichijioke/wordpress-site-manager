@@ -4,10 +4,10 @@
  */
 
 import axios from 'axios'
-import { prisma } from '../lib/prisma'
-import { decryptPassword } from '../lib/auth'
-import { RSSParserService, RSSFeedItem } from './rss-parser'
-import { AIService } from './ai/ai-service'
+import { prisma } from '../lib/prisma.js'
+import { decryptPassword } from '../lib/auth.js'
+import { RSSParserService, RSSFeedItem } from './rss-parser.js'
+import { AIService } from './ai/ai-service.js'
 
 export interface GenerateFromTopicOptions {
   userId: string
@@ -92,7 +92,7 @@ Return only the article content in HTML format, without any meta-commentary.`
       const title = titleResponse.content.split('\n')[0].replace(/^(Title:|#|\d+\.)\s*/i, '').trim()
 
       // Generate an excerpt
-      const excerptResponse = await AIService.summarize(userId, contentResponse.content, 150)
+      const excerptResponse = await AIService.summarizeContent(userId, contentResponse.content, 150)
       const excerpt = excerptResponse.content
 
       // Calculate total tokens and cost

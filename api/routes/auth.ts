@@ -3,8 +3,8 @@
  * Handle user registration, login, token management, etc.
  */
 import { Router, type Request, type Response } from 'express'
-import { prisma } from '../lib/prisma'
-import { hashPassword, comparePassword, generateToken, authenticateToken, AuthenticatedRequest } from '../lib/auth'
+import { prisma } from '../lib/prisma.js'
+import { hashPassword, comparePassword, generateToken, authenticateToken, AuthenticatedRequest } from '../lib/auth.js'
 
 const router = Router()
 

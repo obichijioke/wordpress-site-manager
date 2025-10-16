@@ -3,8 +3,8 @@
  * Background worker that processes automation jobs sequentially from the queue
  */
 
-import { prisma } from '../lib/prisma'
-import { ArticleGenerationService } from './article-generation-service'
+import { prisma } from '../lib/prisma.js'
+import { ArticleGenerationService } from './article-generation-service.js'
 
 export class AutomationJobProcessor {
   private static isProcessing = false

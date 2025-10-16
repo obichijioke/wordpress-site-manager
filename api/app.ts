@@ -57,8 +57,31 @@ app.use('/api/scheduled-posts', scheduledPostsRoutes)
 app.use('/api/automation-schedules', automationSchedulesRoutes)
 
 /**
- * health
+ * health check endpoints
  */
+// Root health check (for Docker healthcheck)
+app.get('/health', async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Check database connectivity
+    const { prisma } = await import('./lib/prisma.js')
+    await prisma.$queryRaw`SELECT 1`
+
+    res.status(200).json({
+      success: true,
+      message: 'ok',
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    })
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      message: 'Service unavailable',
+      database: 'disconnected'
+    })
+  }
+})
+
+// API health check (legacy)
 app.use(
   '/api/health',
   (req: Request, res: Response, next: NextFunction): void => {
@@ -70,22 +93,35 @@ app.use(
 )
 
 /**
+ * Serve frontend static files (production)
+ */
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the React app build
+  app.use(express.static(path.join(__dirname, '../dist')))
+
+  // Handle React routing - return index.html for all non-API routes
+  app.get('*', (req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'))
+  })
+} else {
+  /**
+   * 404 handler for development (when frontend runs separately on Vite)
+   */
+  app.use((req: Request, res: Response) => {
+    res.status(404).json({
+      success: false,
+      error: 'API not found',
+    })
+  })
+}
+
+/**
  * error handler middleware
  */
 app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({
     success: false,
     error: 'Server internal error',
-  })
-})
-
-/**
- * 404 handler
- */
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    success: false,
-    error: 'API not found',
   })
 })
 
