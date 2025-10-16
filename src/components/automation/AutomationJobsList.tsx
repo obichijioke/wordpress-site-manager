@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { 
   Clock, 
   CheckCircle, 
@@ -37,28 +37,47 @@ export default function AutomationJobsList({ siteId, onSuccess, onError }: Autom
   const [perPage] = useState(20)
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [selectedJob, setSelectedJob] = useState<AutomationJobWithDetails | null>(null)
+  const [autoRefresh, setAutoRefresh] = useState(true)
 
-  useEffect(() => {
-    loadJobs()
-  }, [page, statusFilter, siteId])
-
-  const loadJobs = async () => {
+  const loadJobs = useCallback(async () => {
     setLoading(true)
     try {
+      console.log('[AutomationJobsList] Loading jobs with params:', { page, perPage, statusFilter, siteId })
       const response = await automationClient.getAutomationJobs({
         page,
         perPage,
         ...(statusFilter && { status: statusFilter }),
         ...(siteId && { siteId })
       })
+      console.log('[AutomationJobsList] Received response:', {
+        jobsCount: response.jobs?.length || 0,
+        total: response.total || 0,
+        jobs: response.jobs
+      })
       setJobs(response.jobs || [])
       setTotal(response.total || 0)
     } catch (err: any) {
+      console.error('[AutomationJobsList] Error loading jobs:', err)
       onError('Failed to load automation jobs')
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, perPage, statusFilter, siteId, onError])
+
+  useEffect(() => {
+    loadJobs()
+  }, [loadJobs])
+
+  // Auto-refresh jobs every 10 seconds when enabled
+  useEffect(() => {
+    if (!autoRefresh) return
+
+    const interval = setInterval(() => {
+      loadJobs()
+    }, 10000) // 10 seconds
+
+    return () => clearInterval(interval)
+  }, [autoRefresh, loadJobs])
 
   const handleDelete = async (jobId: string) => {
     if (!confirm('Are you sure you want to delete this automation job?')) {
@@ -93,15 +112,32 @@ export default function AutomationJobsList({ siteId, onSuccess, onError }: Autom
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="GENERATING">Generating</option>
             <option value="GENERATED">Generated</option>
+            <option value="PUBLISHING">Publishing</option>
             <option value="PUBLISHED">Published</option>
             <option value="FAILED">Failed</option>
           </select>
           <button
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            className={`px-3 py-2 border rounded-lg transition-colors ${
+              autoRefresh
+                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300'
+                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+            title={autoRefresh ? 'Auto-refresh enabled (10s)' : 'Auto-refresh disabled'}
+          >
+            <div className="flex items-center gap-2">
+              <RefreshCw className={`h-4 w-4 ${autoRefresh ? 'animate-spin' : ''}`} />
+              <span className="text-sm">Auto</span>
+            </div>
+          </button>
+          <button
             onClick={loadJobs}
             disabled={loading}
-            className="p-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            title="Refresh"
+            className="p-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            title="Refresh now"
           >
             <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
           </button>

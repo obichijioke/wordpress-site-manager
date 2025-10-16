@@ -9,6 +9,7 @@ import { authenticateToken, AuthenticatedRequest, decryptPassword, encryptPasswo
 import { RSSParserService } from '../services/rss-parser'
 import { ArticleAutomationService } from '../services/article-automation'
 import { ArticleGenerationService } from '../services/article-generation-service'
+import { AutomationJobProcessor } from '../services/automation-job-processor'
 import axios from 'axios'
 import https from 'https'
 
@@ -561,6 +562,9 @@ router.get('/jobs', authenticateToken, async (req: AuthenticatedRequest, res: Re
       where.siteId = siteId
     }
 
+    console.log('[API /jobs] Query params:', { page, perPage, status, siteId })
+    console.log('[API /jobs] Where clause:', where)
+
     const skip = (parseInt(page as string) - 1) * parseInt(perPage as string)
     const take = parseInt(perPage as string)
 
@@ -583,6 +587,8 @@ router.get('/jobs', authenticateToken, async (req: AuthenticatedRequest, res: Re
       }),
       prisma.automationJob.count({ where })
     ])
+
+    console.log('[API /jobs] Found jobs:', { count: jobs.length, total })
 
     res.json({
       success: true,
@@ -951,7 +957,7 @@ router.post('/research-topic', authenticateToken, async (req: AuthenticatedReque
         { context: context.trim() },
         {
           headers,
-          timeout: 60000, // 60 seconds timeout
+          timeout: 300000, // 5 minutes timeout
           validateStatus: (status) => status < 500 // Don't throw on 4xx errors
         }
       )
@@ -984,7 +990,7 @@ router.post('/research-topic', authenticateToken, async (req: AuthenticatedReque
       })
     } catch (error: any) {
       if (error.code === 'ECONNABORTED') {
-        res.status(504).json({ error: 'Research API request timed out (60s)' })
+        res.status(504).json({ error: 'Research API request timed out (5 minutes)' })
         return
       }
 
@@ -1002,6 +1008,24 @@ router.post('/research-topic', authenticateToken, async (req: AuthenticatedReque
   } catch (error: any) {
     console.error('Research topic error:', error)
     res.status(500).json({ error: 'Failed to research topic' })
+  }
+})
+
+/**
+ * Get automation job queue statistics
+ * GET /api/article-automation/queue-stats
+ */
+router.get('/queue-stats', authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const stats = await AutomationJobProcessor.getQueueStats()
+
+    res.json({
+      success: true,
+      stats
+    })
+  } catch (error: any) {
+    console.error('Get queue stats error:', error)
+    res.status(500).json({ error: 'Failed to get queue statistics' })
   }
 })
 

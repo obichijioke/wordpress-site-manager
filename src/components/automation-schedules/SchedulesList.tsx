@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { automationSchedulesClient, AutomationSchedule } from '../../lib/automation-schedules-api'
+import { EditScheduleForm } from './EditScheduleForm'
 
 interface SchedulesListProps {
   siteId: string
@@ -13,6 +14,7 @@ export const SchedulesList: React.FC<SchedulesListProps> = ({
   const [schedules, setSchedules] = useState<AutomationSchedule[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all')
+  const [editingSchedule, setEditingSchedule] = useState<AutomationSchedule | null>(null)
 
   useEffect(() => {
     fetchSchedules()
@@ -69,6 +71,19 @@ export const SchedulesList: React.FC<SchedulesListProps> = ({
     }
   }
 
+  const handleEdit = (schedule: AutomationSchedule) => {
+    setEditingSchedule(schedule)
+  }
+
+  const handleEditSuccess = () => {
+    setEditingSchedule(null)
+    fetchSchedules()
+  }
+
+  const handleEditCancel = () => {
+    setEditingSchedule(null)
+  }
+
   const getScheduleTypeLabel = (type: string) => {
     const labels = {
       ONCE: 'One-time',
@@ -93,6 +108,31 @@ export const SchedulesList: React.FC<SchedulesListProps> = ({
             <div className="h-3 bg-gray-200 rounded w-1/2"></div>
           </div>
         ))}
+      </div>
+    )
+  }
+
+  // If editing a schedule, show the edit form
+  if (editingSchedule) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold">Edit Schedule</h2>
+          <button
+            onClick={handleEditCancel}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <EditScheduleForm
+          schedule={editingSchedule}
+          siteId={siteId}
+          onSuccess={handleEditSuccess}
+          onCancel={handleEditCancel}
+        />
       </div>
     )
   }
@@ -225,6 +265,13 @@ export const SchedulesList: React.FC<SchedulesListProps> = ({
                 {/* Actions */}
                 <div className="flex flex-col gap-2 ml-4">
                   <button
+                    onClick={() => handleEdit(schedule)}
+                    className="px-3 py-1 text-sm bg-gray-600 text-white rounded hover:bg-gray-700"
+                  >
+                    Edit
+                  </button>
+
+                  <button
                     onClick={() => handleToggle(schedule.id, schedule.isActive)}
                     className={`px-3 py-1 text-sm rounded ${
                       schedule.isActive
@@ -234,14 +281,14 @@ export const SchedulesList: React.FC<SchedulesListProps> = ({
                   >
                     {schedule.isActive ? 'Pause' : 'Resume'}
                   </button>
-                  
+
                   <button
                     onClick={() => handleRunNow(schedule.id)}
                     className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
                     Run Now
                   </button>
-                  
+
                   <button
                     onClick={() => handleDelete(schedule.id)}
                     className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"

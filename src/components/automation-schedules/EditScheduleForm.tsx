@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from 'react'
-import { automationSchedulesClient } from '../../lib/automation-schedules-api'
+import { automationSchedulesClient, AutomationSchedule } from '../../lib/automation-schedules-api'
 import { automationClient } from '../../lib/automation-api'
 
-interface CreateScheduleFormProps {
+interface EditScheduleFormProps {
+  schedule: AutomationSchedule
   siteId: string
   onSuccess?: () => void
   onCancel?: () => void
 }
 
-export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
+export const EditScheduleForm: React.FC<EditScheduleFormProps> = ({
+  schedule,
   siteId,
   onSuccess,
   onCancel,
 }) => {
   const [rssFeeds, setRssFeeds] = useState<any[]>([])
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    rssFeedId: '',
-    scheduleType: 'DAILY' as 'ONCE' | 'EVERY_5_MIN' | 'EVERY_10_MIN' | 'EVERY_30_MIN' | 'HOURLY' | 'EVERY_2_HOURS' | 'EVERY_6_HOURS' | 'EVERY_12_HOURS' | 'DAILY' | 'WEEKLY' | 'CUSTOM',
-    cronExpression: '0 8 * * *',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    scheduledDate: '',
-    scheduledTime: '',
-    autoPublish: false,
-    publishStatus: 'draft',
-    maxArticles: 20,
+    name: schedule.name,
+    description: schedule.description || '',
+    rssFeedId: schedule.rssFeedId || '',
+    scheduleType: schedule.scheduleType as 'ONCE' | 'EVERY_5_MIN' | 'EVERY_10_MIN' | 'EVERY_30_MIN' | 'HOURLY' | 'EVERY_2_HOURS' | 'EVERY_6_HOURS' | 'EVERY_12_HOURS' | 'DAILY' | 'WEEKLY' | 'CUSTOM',
+    cronExpression: schedule.cronExpression || '0 8 * * *',
+    timezone: schedule.timezone,
+    autoPublish: schedule.autoPublish,
+    publishStatus: schedule.publishStatus,
+    maxArticles: schedule.maxArticles || 20,
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -35,7 +35,7 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
 
   const fetchRSSFeeds = async () => {
     try {
-      const response = await automationClient.getRSSFeeds()
+      const response = await automationClient.getRSSFeeds({ siteId })
       setRssFeeds(response.feeds || [])
     } catch (error) {
       console.error('Failed to fetch RSS feeds:', error)
@@ -45,19 +45,11 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name) {
-      alert('Please enter a schedule name')
-      return
-    }
-
     setIsSubmitting(true)
     try {
-      const scheduleData: any = {
-        siteId,
+      const updateData: any = {
         name: formData.name,
         description: formData.description || undefined,
-        rssFeedId: formData.rssFeedId || undefined,
-        scheduleType: formData.scheduleType,
         timezone: formData.timezone,
         autoPublish: formData.autoPublish,
         publishStatus: formData.publishStatus,
@@ -65,54 +57,17 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
       }
 
       if (formData.scheduleType === 'CUSTOM') {
-        scheduleData.cronExpression = formData.cronExpression
-      } else if (formData.scheduleType === 'ONCE') {
-        if (!formData.scheduledDate || !formData.scheduledTime) {
-          alert('Please select date and time for one-time schedule')
-          setIsSubmitting(false)
-          return
-        }
-        scheduleData.scheduledFor = new Date(`${formData.scheduledDate}T${formData.scheduledTime}`)
+        updateData.cronExpression = formData.cronExpression
       }
 
-      await automationSchedulesClient.createSchedule(scheduleData)
-      alert('Schedule created successfully!')
-      if (onSuccess) {
-        onSuccess()
-      }
+      await automationSchedulesClient.updateSchedule(schedule.id, updateData)
+      alert('Schedule updated successfully!')
+      onSuccess?.()
     } catch (error: any) {
-      alert(`Failed to create schedule: ${error.message}`)
+      console.error('Failed to update schedule:', error)
+      alert(`Failed to update schedule: ${error.message}`)
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const getCronDescription = () => {
-    switch (formData.scheduleType) {
-      case 'EVERY_5_MIN':
-        return 'Runs every 5 minutes'
-      case 'EVERY_10_MIN':
-        return 'Runs every 10 minutes'
-      case 'EVERY_30_MIN':
-        return 'Runs every 30 minutes'
-      case 'HOURLY':
-        return 'Runs every hour'
-      case 'EVERY_2_HOURS':
-        return 'Runs every 2 hours'
-      case 'EVERY_6_HOURS':
-        return 'Runs every 6 hours'
-      case 'EVERY_12_HOURS':
-        return 'Runs every 12 hours'
-      case 'DAILY':
-        return 'Runs every day at 8:00 AM'
-      case 'WEEKLY':
-        return 'Runs every Monday at 8:00 AM'
-      case 'CUSTOM':
-        return 'Custom cron expression'
-      case 'ONCE':
-        return 'Runs once at specified time'
-      default:
-        return ''
     }
   }
 
@@ -152,20 +107,24 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              RSS Feed (Optional)
+              RSS Feed
             </label>
             <select
               value={formData.rssFeedId}
               onChange={(e) => setFormData({ ...formData, rssFeedId: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              disabled
             >
-              <option value="">Select RSS Feed</option>
+              <option value="">No RSS Feed (Manual)</option>
               {rssFeeds.map((feed) => (
                 <option key={feed.id} value={feed.id}>
                   {feed.name}
                 </option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-gray-500">
+              RSS Feed cannot be changed after creation
+            </p>
           </div>
         </div>
       </div>
@@ -183,55 +142,24 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
               value={formData.scheduleType}
               onChange={(e) => setFormData({ ...formData, scheduleType: e.target.value as any })}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              disabled
             >
               <option value="ONCE">Once</option>
-              <optgroup label="Frequent Intervals">
-                <option value="EVERY_5_MIN">Every 5 Minutes</option>
-                <option value="EVERY_10_MIN">Every 10 Minutes</option>
-                <option value="EVERY_30_MIN">Every 30 Minutes</option>
-              </optgroup>
-              <optgroup label="Hourly Intervals">
-                <option value="HOURLY">Every Hour</option>
-                <option value="EVERY_2_HOURS">Every 2 Hours</option>
-                <option value="EVERY_6_HOURS">Every 6 Hours</option>
-                <option value="EVERY_12_HOURS">Every 12 Hours</option>
-              </optgroup>
-              <optgroup label="Daily/Weekly">
-                <option value="DAILY">Daily</option>
-                <option value="WEEKLY">Weekly</option>
-              </optgroup>
+              <option value="EVERY_5_MIN">Every 5 Minutes</option>
+              <option value="EVERY_10_MIN">Every 10 Minutes</option>
+              <option value="EVERY_30_MIN">Every 30 Minutes</option>
+              <option value="HOURLY">Hourly</option>
+              <option value="EVERY_2_HOURS">Every 2 Hours</option>
+              <option value="EVERY_6_HOURS">Every 6 Hours</option>
+              <option value="EVERY_12_HOURS">Every 12 Hours</option>
+              <option value="DAILY">Daily</option>
+              <option value="WEEKLY">Weekly</option>
               <option value="CUSTOM">Custom (Cron)</option>
             </select>
-            <p className="text-sm text-gray-500 mt-1">{getCronDescription()}</p>
+            <p className="mt-1 text-xs text-gray-500">
+              Schedule type cannot be changed after creation
+            </p>
           </div>
-
-          {formData.scheduleType === 'ONCE' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={formData.scheduledDate}
-                  onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Time <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="time"
-                  value={formData.scheduledTime}
-                  onChange={(e) => setFormData({ ...formData, scheduledTime: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          )}
 
           {formData.scheduleType === 'CUSTOM' && (
             <div>
@@ -255,27 +183,19 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Timezone
             </label>
-            <select
+            <input
+              type="text"
               value={formData.timezone}
               onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="America/New_York">Eastern Time (ET)</option>
-              <option value="America/Chicago">Central Time (CT)</option>
-              <option value="America/Denver">Mountain Time (MT)</option>
-              <option value="America/Los_Angeles">Pacific Time (PT)</option>
-              <option value="UTC">UTC</option>
-              <option value="Europe/London">London (GMT)</option>
-              <option value="Europe/Paris">Paris (CET)</option>
-              <option value="Asia/Tokyo">Tokyo (JST)</option>
-            </select>
+            />
           </div>
         </div>
       </div>
 
-      {/* Publishing Settings */}
+      {/* Publishing Options */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4">Publishing Settings</h3>
+        <h3 className="text-lg font-semibold mb-4">Publishing Options</h3>
         
         <div className="space-y-4">
           <div className="flex items-center">
@@ -284,10 +204,10 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
               id="autoPublish"
               checked={formData.autoPublish}
               onChange={(e) => setFormData({ ...formData, autoPublish: e.target.checked })}
-              className="mr-2"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="autoPublish" className="text-sm font-medium text-gray-700">
-              Auto-publish generated articles
+            <label htmlFor="autoPublish" className="ml-2 block text-sm text-gray-700">
+              Auto-publish to WordPress
             </label>
           </div>
 
@@ -301,7 +221,9 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             >
               <option value="draft">Draft</option>
-              <option value="publish">Publish</option>
+              <option value="publish">Published</option>
+              <option value="pending">Pending Review</option>
+              <option value="private">Private</option>
             </select>
           </div>
 
@@ -331,7 +253,7 @@ export const CreateScheduleForm: React.FC<CreateScheduleFormProps> = ({
           disabled={isSubmitting}
           className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          {isSubmitting ? 'Creating...' : 'Create Schedule'}
+          {isSubmitting ? 'Updating...' : 'Update Schedule'}
         </button>
         {onCancel && (
           <button

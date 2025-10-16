@@ -489,35 +489,53 @@ export class AutomationSchedulerService {
         return
       }
 
+      console.log(`[AutomationScheduler] Found ${feedData.items.length} article(s) in RSS feed`)
+      console.log(`[AutomationScheduler] Feed items:`, feedData.items.map(item => ({ title: item.title, link: item.link })))
+
       // Determine how many articles to process
-      const maxArticles = fullSchedule.maxArticles || 1
+      // If maxArticles is not set or is 0, default to 20
+      // If maxArticles is set to a low value (1-2), warn but respect it
+      const maxArticles = fullSchedule.maxArticles && fullSchedule.maxArticles > 0
+        ? fullSchedule.maxArticles
+        : 20
+
+      if (fullSchedule.maxArticles && fullSchedule.maxArticles <= 2) {
+        console.warn(`[AutomationScheduler] ⚠️  maxArticles is set to ${fullSchedule.maxArticles}, which is very low. Only ${fullSchedule.maxArticles} article(s) will be processed per run.`)
+      }
+
       const articlesToProcess = feedData.items.slice(0, maxArticles)
 
-      console.log(`[AutomationScheduler] Processing ${articlesToProcess.length} article(s)`)
+      console.log(`[AutomationScheduler] Will create jobs for up to ${articlesToProcess.length} article(s) (maxArticles: ${maxArticles})`)
+      console.log(`[AutomationScheduler] Articles to process:`, articlesToProcess.map(item => ({ title: item.title, link: item.link })))
 
-      // Process each article
+      // Create PENDING jobs for each new article (don't process them yet)
+      console.log(`[AutomationScheduler] Starting loop to process ${articlesToProcess.length} articles...`)
+      let loopIndex = 0
       for (const article of articlesToProcess) {
-        articlesProcessed++
-
         try {
-          console.log(`[AutomationScheduler] Processing article: ${article.title}`)
+          loopIndex++
+          console.log(`[AutomationScheduler] [${loopIndex}/${articlesToProcess.length}] Checking article: ${article.title}`)
 
-          // Check if we've already processed this article
+          // Check if we've already created a job for this article from this RSS feed
+          // We check by userId, rssFeedId, and sourceUrl to ensure we don't duplicate
+          // articles from the same feed, regardless of status
           const existingJob = await prisma.automationJob.findFirst({
             where: {
               userId: fullSchedule.userId,
-              sourceUrl: article.link,
-              status: { in: ['PUBLISHED', 'PUBLISHING'] }
+              rssFeedId: fullSchedule.rssFeedId,
+              sourceUrl: article.link
             }
           })
 
           if (existingJob) {
-            console.log(`[AutomationScheduler] Article already processed, skipping: ${article.title}`)
-            articlesProcessed-- // Don't count skipped articles
+            console.log(`[AutomationScheduler] [${loopIndex}/${articlesToProcess.length}] Article already has a job (Job ID: ${existingJob.id}, Status: ${existingJob.status}), skipping: ${article.title}`)
             continue
           }
 
-          // Create automation job
+          console.log(`[AutomationScheduler] [${loopIndex}/${articlesToProcess.length}] Creating PENDING job for new article: ${article.title}`)
+
+          // Create automation job with PENDING status
+          // The job processor will pick it up and process it
           const job = await prisma.automationJob.create({
             data: {
               userId: fullSchedule.userId,
@@ -526,71 +544,23 @@ export class AutomationSchedulerService {
               rssFeedId: fullSchedule.rssFeedId,
               sourceUrl: article.link,
               sourceTitle: article.title,
-              status: 'GENERATING'
+              status: 'PENDING'
             }
           })
 
-          console.log(`[AutomationScheduler] Created job ${job.id} for article: ${article.title}`)
-
-          // Generate article content with metadata and images
-          const generatedArticle = await ArticleGenerationService.generateCompleteArticle({
-            userId: fullSchedule.userId,
-            siteId: fullSchedule.siteId,
-            rssFeedId: fullSchedule.rssFeedId,
-            articleTitle: article.title,
-            articleUrl: article.link
-          })
-
-          // Update job with generated content
-          await prisma.automationJob.update({
-            where: { id: job.id },
-            data: {
-              generatedTitle: generatedArticle.title,
-              generatedContent: generatedArticle.content,
-              generatedExcerpt: generatedArticle.excerpt,
-              status: 'GENERATED'
-            }
-          })
-
-          console.log(`[AutomationScheduler] Generated content for job ${job.id}`)
-
-          // Publish to WordPress if autoPublish is enabled
-          if (fullSchedule.autoPublish) {
-            console.log(`[AutomationScheduler] Publishing job ${job.id} to WordPress...`)
-
-            await prisma.automationJob.update({
-              where: { id: job.id },
-              data: { status: 'PUBLISHING' }
-            })
-
-            const publishResult = await ArticleGenerationService.publishToWordPress(
-              fullSchedule.siteId,
-              generatedArticle,
-              fullSchedule.publishStatus as 'draft' | 'publish'
-            )
-
-            await prisma.automationJob.update({
-              where: { id: job.id },
-              data: {
-                status: 'PUBLISHED',
-                wpPostId: publishResult.wpPostId,
-                publishedAt: new Date()
-              }
-            })
-
-            console.log(`[AutomationScheduler] Successfully published job ${job.id} (WP Post ID: ${publishResult.wpPostId})`)
-          } else {
-            console.log(`[AutomationScheduler] Auto-publish disabled, job ${job.id} saved as draft`)
-          }
-
+          articlesProcessed++
           articlesSucceeded++
 
+          console.log(`[AutomationScheduler] [${loopIndex}/${articlesToProcess.length}] ✅ Created PENDING job ${job.id} for article: ${article.title}`)
+
         } catch (articleError: any) {
-          console.error(`[AutomationScheduler] Error processing article "${article.title}":`, articleError.message)
+          console.error(`[AutomationScheduler] [${loopIndex}/${articlesToProcess.length}] ❌ Error creating job for article "${article.title}":`, articleError.message)
           articlesFailed++
           // Continue with next article
         }
       }
+
+      console.log(`[AutomationScheduler] Loop completed. Processed ${loopIndex} articles. Created: ${articlesSucceeded}, Failed: ${articlesFailed}`)
 
       // Mark execution as successful if at least one article was processed successfully
       executionSuccess = articlesSucceeded > 0 || articlesProcessed === 0
@@ -625,7 +595,7 @@ export class AutomationSchedulerService {
       })
 
       console.log(`[AutomationScheduler] Schedule execution completed: ${schedule.name}`)
-      console.log(`[AutomationScheduler] Stats - Processed: ${articlesProcessed}, Succeeded: ${articlesSucceeded}, Failed: ${articlesFailed}`)
+      console.log(`[AutomationScheduler] Stats - Total in feed: ${feedData.items.length}, New articles processed: ${articlesProcessed}, Succeeded: ${articlesSucceeded}, Failed: ${articlesFailed}, Skipped (already processed): ${articlesToProcess.length - articlesProcessed}`)
 
     } catch (error: any) {
       console.error(`[AutomationScheduler] Error executing schedule "${schedule.name}":`, error.message)
