@@ -4,11 +4,11 @@
  */
 
 import { Router, Response } from 'express'
-import { authenticateToken, AuthenticatedRequest, encryptPassword, decryptPassword } from '../lib/auth'
-import { prisma } from '../lib/prisma'
-import { OpenAIProvider } from '../services/ai/providers/openai-provider'
-import { AnthropicProvider } from '../services/ai/providers/anthropic-provider'
-import { AVAILABLE_MODELS } from '../services/ai/types'
+import { authenticateToken, AuthenticatedRequest, encryptPassword, decryptPassword } from '../lib/auth.js'
+import { prisma } from '../lib/prisma.js'
+import { OpenAIProvider } from '../services/ai/providers/openai-provider.js'
+import { AnthropicProvider } from '../services/ai/providers/anthropic-provider.js'
+import { AVAILABLE_MODELS } from '../services/ai/types.js'
 
 const router = Router()
 

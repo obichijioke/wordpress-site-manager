@@ -3,7 +3,7 @@
  * Handle file uploads, media library, and asset management
  */
 import { Router, type Response } from 'express'
-import { authenticateToken, AuthenticatedRequest } from '../lib/auth'
+import { authenticateToken, AuthenticatedRequest } from '../lib/auth.js'
 import multer from 'multer'
 import path from 'path'
 import fs from 'fs/promises'

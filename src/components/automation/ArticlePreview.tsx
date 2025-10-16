@@ -12,7 +12,7 @@ interface ArticlePreviewProps {
     excerpt: string
   }
   siteId: string
-  onPublish: (data: { status: string; categories: number[]; tags: number[]; featuredMedia?: number }) => Promise<void>
+  onPublish: (data: { status: 'draft' | 'published'; categories: number[]; tags: number[]; featuredMedia?: number }) => Promise<void>
   onError: (message: string) => void
 }
 
@@ -31,7 +31,7 @@ export default function ArticlePreview({ job, preview, siteId, onPublish, onErro
     setLoadingCategories(true)
     try {
       const response = await apiClient.getWordPressCategories(siteId)
-      setCategories(response.categories || [])
+      setCategories(response.data?.categories || [])
     } catch (err: any) {
       // Categories are optional, so don't show error
       console.error('Failed to load categories:', err)

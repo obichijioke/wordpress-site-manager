@@ -3,8 +3,8 @@
  * Handle articles, pages, drafts, and content synchronization
  */
 import { Router, type Response } from 'express'
-import { prisma } from '../lib/prisma'
-import { authenticateToken, AuthenticatedRequest, decryptPassword } from '../lib/auth'
+import { prisma } from '../lib/prisma.js'
+import { authenticateToken, AuthenticatedRequest, decryptPassword } from '../lib/auth.js'
 import axios from 'axios'
 import https from 'https'
 import multer from 'multer'

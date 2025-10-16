@@ -4,12 +4,12 @@
  */
 
 import { Router, type Response } from 'express'
-import { prisma } from '../lib/prisma'
-import { authenticateToken, AuthenticatedRequest, decryptPassword, encryptPassword } from '../lib/auth'
-import { RSSParserService } from '../services/rss-parser'
-import { ArticleAutomationService } from '../services/article-automation'
-import { ArticleGenerationService } from '../services/article-generation-service'
-import { AutomationJobProcessor } from '../services/automation-job-processor'
+import { prisma } from '../lib/prisma.js'
+import { authenticateToken, AuthenticatedRequest, decryptPassword, encryptPassword } from '../lib/auth.js'
+import { RSSParserService } from '../services/rss-parser.js'
+import { ArticleAutomationService } from '../services/article-automation.js'
+import { ArticleGenerationService } from '../services/article-generation-service.js'
+import { AutomationJobProcessor } from '../services/automation-job-processor.js'
 import axios from 'axios'
 import https from 'https'
 

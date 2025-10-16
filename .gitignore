@@ -47,3 +47,15 @@ build/
 
 # OS files
 Thumbs.db
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Backups
+backups/
+*.sql
+*.sql.gz
+
+# Secrets
+secrets/

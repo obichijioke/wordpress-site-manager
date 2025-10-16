@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: wordpress-manager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-wordpress_manager}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_this_password}
+      POSTGRES_DB: ${POSTGRES_DB:-wordpress_manager}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wordpress_manager}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - wordpress-manager-network
+
+  # WordPress Manager Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wordpress-manager-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-wordpress_manager}:${POSTGRES_PASSWORD:-change_this_password}@postgres:5432/${POSTGRES_DB:-wordpress_manager}?schema=public
+      
+      # Application
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3001}
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      
+      # File Storage
+      UPLOAD_DIR: ${UPLOAD_DIR:-./uploads}
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+      
+      # WordPress API
+      WP_API_TIMEOUT: ${WP_API_TIMEOUT:-30000}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "${APP_PORT:-3001}:3001"
+    networks:
+      - wordpress-manager-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: wordpress-manager-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - wordpress-manager-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  wordpress-manager-network:
+    driver: bridge
+

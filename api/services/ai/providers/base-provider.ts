@@ -3,7 +3,7 @@
  * All AI providers must implement this interface
  */
 
-import { AIResponse } from '../types'
+import { AIResponse } from '../types.js'
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant'

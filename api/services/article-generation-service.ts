@@ -10,10 +10,10 @@
 import axios from 'axios'
 import https from 'https'
 import { marked } from 'marked'
-import { prisma } from '../lib/prisma'
-import { decryptPassword } from '../lib/auth'
-import { AIService } from './ai/ai-service'
-import { ImageService } from './images/image-service'
+import { prisma } from '../lib/prisma.js'
+import { decryptPassword } from '../lib/auth.js'
+import { AIService } from './ai/ai-service.js'
+import { ImageService } from './images/image-service.js'
 
 export interface ArticleGenerationOptions {
   userId: string
@@ -346,9 +346,7 @@ export class ArticleGenerationService {
       // Configure marked options for WordPress compatibility
       marked.setOptions({
         breaks: true, // Convert line breaks to <br>
-        gfm: true, // GitHub Flavored Markdown
-        headerIds: false, // Don't add IDs to headers
-        mangle: false // Don't escape email addresses
+        gfm: true // GitHub Flavored Markdown
       })
 
       // Convert markdown to HTML

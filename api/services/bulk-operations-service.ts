@@ -1,5 +1,5 @@
-import { prisma } from '../lib/prisma'
-import { decryptPassword } from '../lib/auth'
+import { prisma } from '../lib/prisma.js'
+import { decryptPassword } from '../lib/auth.js'
 import axios from 'axios'
 import https from 'https'
 import PQueue from 'p-queue'
