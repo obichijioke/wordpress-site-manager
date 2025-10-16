@@ -17,7 +17,9 @@ import {
   User,
   Moon,
   Sun,
-  Sparkles
+  Sparkles,
+  Calendar,
+  Clock
 } from 'lucide-react'
 
 interface LayoutProps {

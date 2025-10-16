@@ -20,17 +20,20 @@ model User {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  sites            Site[]
-  contentDrafts    ContentDraft[]
-  aiSettings       AISettings?
-  aiUsage          AIUsage[]
-  customModels     CustomModel[]
-  imageProviders   ImageProvider[]
-  imageUsageLogs   ImageUsageLog[]
-  imageUrlFilters  ImageUrlFilter[]
-  rssFeeds         RSSFeed[]
-  automationJobs   AutomationJob[]
-  researchSettings ResearchSettings?
+  sites               Site[]
+  contentDrafts       ContentDraft[]
+  aiSettings          AISettings?
+  aiUsage             AIUsage[]
+  customModels        CustomModel[]
+  imageProviders      ImageProvider[]
+  imageUsageLogs      ImageUsageLog[]
+  imageUrlFilters     ImageUrlFilter[]
+  rssFeeds            RSSFeed[]
+  automationJobs      AutomationJob[]
+  researchSettings    ResearchSettings?
+  bulkOperations      BulkOperation[]
+  scheduledPosts      ScheduledPost[]
+  automationSchedules AutomationSchedule[]
 
   @@map("users")
 }
@@ -48,11 +51,14 @@ model Site {
   updatedAt        DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contentDrafts  ContentDraft[]
-  contentSync    ContentSync[]
-  categories     Category[]
-  automationJobs AutomationJob[]
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentDrafts       ContentDraft[]
+  contentSync         ContentSync[]
+  categories          Category[]
+  automationJobs      AutomationJob[]
+  bulkOperations      BulkOperation[]
+  scheduledPosts      ScheduledPost[]
+  automationSchedules AutomationSchedule[]
 
   @@map("sites")
 }
@@ -74,9 +80,10 @@ model ContentDraft {
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
   // Relations
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  site     Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id])
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site           Site            @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  category       Category?       @relation(fields: [categoryId], references: [id])
+  scheduledPosts ScheduledPost[]
 
   @@map("content_drafts")
 }
@@ -254,7 +261,8 @@ model RSSFeed {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  automationJobs AutomationJob[]
+  automationJobs      AutomationJob[]
+  automationSchedules AutomationSchedule[]
 
   @@index([userId])
   @@map("rss_feeds")
@@ -360,5 +368,203 @@ enum AutomationStatus {
   GENERATED
   PUBLISHING
   PUBLISHED
+  FAILED
+}
+
+// ============================================
+// BULK OPERATIONS
+// ============================================
+
+model BulkOperation {
+  id             String              @id @default(cuid())
+  userId         String              @map("user_id")
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  siteId         String              @map("site_id")
+  site           Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  operationType  BulkOperationType   @map("operation_type")
+  targetType     BulkTargetType      @map("target_type")
+
+  targetIds      String              @map("target_ids") // JSON array
+  action         String
+  actionData     String?             @map("action_data") // JSON
+
+  status         BulkOperationStatus @default(PENDING)
+  totalItems     Int                 @map("total_items")
+  processedItems Int                 @default(0) @map("processed_items")
+  successCount   Int                 @default(0) @map("success_count")
+  failureCount   Int                 @default(0) @map("failure_count")
+
+  errors         String?             // JSON array
+
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  completedAt    DateTime?           @map("completed_at")
+
+  @@index([userId])
+  @@index([siteId])
+  @@index([status])
+  @@map("bulk_operations")
+}
+
+enum BulkOperationType {
+  PUBLISH
+  UNPUBLISH
+  DELETE
+  UPDATE_METADATA
+  ASSIGN_CATEGORIES
+  ASSIGN_TAGS
+  CHANGE_STATUS
+}
+
+enum BulkTargetType {
+  POST
+  CATEGORY
+  DRAFT
+}
+
+enum BulkOperationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ============================================
+// POST SCHEDULING
+// ============================================
+
+model ScheduledPost {
+  id            String              @id @default(cuid())
+  userId        String              @map("user_id")
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  siteId        String              @map("site_id")
+  site          Site                @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  draftId       String?             @map("draft_id")
+  draft         ContentDraft?       @relation(fields: [draftId], references: [id], onDelete: SetNull)
+
+  title         String
+  content       String
+  excerpt       String?
+  categories    String?             // JSON array
+  tags          String?             // JSON array
+  featuredImage String?             @map("featured_image")
+
+  scheduledFor  DateTime            @map("scheduled_for")
+  timezone      String              @default("UTC")
+
+  status        ScheduledPostStatus @default(PENDING)
+  publishedAt   DateTime?           @map("published_at")
+  wpPostId      Int?                @map("wp_post_id")
+
+  attempts      Int                 @default(0)
+  lastError     String?             @map("last_error")
+
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([siteId])
+  @@index([scheduledFor])
+  @@index([status])
+  @@map("scheduled_posts")
+}
+
+enum ScheduledPostStatus {
+  PENDING
+  PUBLISHING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+// ============================================
+// AUTOMATION SCHEDULING
+// ============================================
+
+model AutomationSchedule {
+  id              String                    @id @default(cuid())
+  userId          String                    @map("user_id")
+  user            User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  siteId          String                    @map("site_id")
+  site            Site                      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  rssFeedId       String?                   @map("rss_feed_id")
+  rssFeed         RSSFeed?                  @relation(fields: [rssFeedId], references: [id], onDelete: SetNull)
+
+  name            String
+  description     String?
+  scheduleType    AutomationScheduleType    @map("schedule_type")
+
+  cronExpression  String?                   @map("cron_expression")
+  timezone        String                    @default("UTC")
+  scheduledFor    DateTime?                 @map("scheduled_for")
+
+  autoPublish     Boolean                   @default(false) @map("auto_publish")
+  publishStatus   String                    @default("draft") @map("publish_status")
+  maxArticles     Int?                      @map("max_articles")
+
+  isActive        Boolean                   @default(true) @map("is_active")
+  lastRun         DateTime?                 @map("last_run")
+  nextRun         DateTime?                 @map("next_run")
+
+  totalRuns       Int                       @default(0) @map("total_runs")
+  successfulRuns  Int                       @default(0) @map("successful_runs")
+  failedRuns      Int                       @default(0) @map("failed_runs")
+
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @updatedAt @map("updated_at")
+
+  executions      AutomationExecution[]
+
+  @@index([userId])
+  @@index([siteId])
+  @@index([isActive])
+  @@index([nextRun])
+  @@map("automation_schedules")
+}
+
+model AutomationExecution {
+  id                String                    @id @default(cuid())
+  scheduleId        String                    @map("schedule_id")
+  schedule          AutomationSchedule        @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  status            AutomationExecutionStatus
+  startedAt         DateTime                  @default(now()) @map("started_at")
+  completedAt       DateTime?                 @map("completed_at")
+
+  articlesGenerated Int                       @default(0) @map("articles_generated")
+  articlesPublished Int                       @default(0) @map("articles_published")
+
+  jobIds            String?                   // JSON array
+  errorMessage      String?                   @map("error_message")
+
+  @@index([scheduleId])
+  @@index([startedAt])
+  @@map("automation_executions")
+}
+
+enum AutomationScheduleType {
+  ONCE
+  EVERY_5_MIN
+  EVERY_10_MIN
+  EVERY_30_MIN
+  HOURLY
+  EVERY_2_HOURS
+  EVERY_6_HOURS
+  EVERY_12_HOURS
+  DAILY
+  WEEKLY
+  CUSTOM
+}
+
+enum AutomationExecutionStatus {
+  RUNNING
+  COMPLETED
   FAILED
 }

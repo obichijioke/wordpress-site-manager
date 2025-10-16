@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Plus, 
-  Rss, 
-  FileText, 
-  Trash2, 
-  RefreshCw, 
-  Send, 
+import {
+  Plus,
+  Rss,
+  FileText,
+  Trash2,
+  RefreshCw,
+  Send,
   Eye,
   Loader,
   CheckCircle,
@@ -13,7 +13,8 @@ import {
   Clock,
   ExternalLink,
   Edit,
-  Sparkles
+  Sparkles,
+  Calendar
 } from 'lucide-react'
 import { automationClient } from '../lib/automation-api'
 import { apiClient } from '../lib/api'
@@ -24,8 +25,10 @@ import TopicGenerator from '../components/automation/TopicGenerator'
 import RSSArticleSelector from '../components/automation/RSSArticleSelector'
 import ArticlePreview from '../components/automation/ArticlePreview'
 import AutomationJobsList from '../components/automation/AutomationJobsList'
+import { ScheduledPosts } from './ScheduledPosts'
+import { AutomationSchedules } from './AutomationSchedules'
 
-type TabType = 'topic' | 'rss' | 'jobs' | 'feeds'
+type TabType = 'topic' | 'rss' | 'jobs' | 'feeds' | 'scheduled-posts' | 'automation-schedules'
 
 export default function ArticleAutomation() {
   const [activeTab, setActiveTab] = useState<TabType>('topic')
@@ -183,6 +186,32 @@ export default function ArticleAutomation() {
               Manage RSS Feeds
             </div>
           </button>
+          <button
+            onClick={() => setActiveTab('scheduled-posts')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'scheduled-posts'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Scheduled Posts
+            </div>
+          </button>
+          <button
+            onClick={() => setActiveTab('automation-schedules')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'automation-schedules'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Automation Schedules
+            </div>
+          </button>
         </nav>
       </div>
 
@@ -217,6 +246,14 @@ export default function ArticleAutomation() {
             onSuccess={showSuccess}
             onError={showError}
           />
+        )}
+
+        {activeTab === 'scheduled-posts' && selectedSite && (
+          <ScheduledPosts embeddedSiteId={selectedSite} hideHeader={true} />
+        )}
+
+        {activeTab === 'automation-schedules' && selectedSite && (
+          <AutomationSchedules embeddedSiteId={selectedSite} hideHeader={true} />
         )}
       </div>
     </div>

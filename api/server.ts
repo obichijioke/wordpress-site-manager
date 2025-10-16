@@ -2,14 +2,22 @@
  * local server entry file, for local development
  */
 import app from './app.js';
+import { startScheduledPostsCron } from './services/cron/scheduled-posts-cron.js';
+import { AutomationSchedulerService } from './services/automation-scheduler-service.js';
 
 /**
  * start server with port
  */
 const PORT = process.env.PORT || 3001;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`Server ready on port ${PORT}`);
+
+  // Initialize cron jobs
+  console.log('Initializing cron jobs...');
+  startScheduledPostsCron();
+  await AutomationSchedulerService.initializeSchedules();
+  console.log('Cron jobs initialized');
 });
 
 /**
