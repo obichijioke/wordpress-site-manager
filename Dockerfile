@@ -5,16 +5,20 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
+# Override NODE_ENV for build stage to ensure devDependencies are installed
+# Coolify injects NODE_ENV=production which would skip devDependencies
+ENV NODE_ENV=development
+
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install ALL dependencies (including devDependencies needed for build)
 RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build frontend
+# Build frontend (requires devDependencies like Vite, TypeScript, etc.)
 RUN npm run build
 
 # Stage 2: Build backend and final image
@@ -22,7 +26,10 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Install production dependencies
+# Set NODE_ENV to production for runtime
+ENV NODE_ENV=production
+
+# Install production dependencies only
 COPY package*.json ./
 RUN npm ci --only=production
 
