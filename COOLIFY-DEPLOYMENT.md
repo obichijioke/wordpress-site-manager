@@ -48,7 +48,9 @@ Coolify will detect your `docker-compose.yml` file automatically.
 
 ## Step 4: Configure Environment Variables
 
-In Coolify's environment variables section, add the following variables:
+In Coolify's environment variables section, add the following variables.
+
+**IMPORTANT**: Make sure to **UNCHECK "Available at Buildtime"** for `NODE_ENV` or the build will fail. The Dockerfile handles NODE_ENV internally for each build stage.
 
 ### Required Variables:
 
@@ -176,12 +178,27 @@ To enable the database management UI:
 
 ## Troubleshooting
 
-### Issue: Build Fails
+### Issue: Build Fails with "npm run build" Error
+
+**Symptoms**:
+```
+failed to solve: process "/bin/sh -c npm run build" did not complete successfully: exit code: 1
+```
+
+**Root Cause**: Coolify injected `NODE_ENV=production` as a build-time ARG, causing npm to skip devDependencies.
+
+**Solution**:
+1. The Dockerfile has been updated to handle this automatically (commit 7ded0e6)
+2. Make sure you're using the latest version of the code
+3. Alternatively, in Coolify's environment variables, **UNCHECK "Available at Buildtime"** for `NODE_ENV`
+
+### Issue: Build Fails (General)
 
 **Solution**: Check build logs in Coolify. Common issues:
 - Missing environment variables
 - TypeScript compilation errors
 - Node.js version mismatch
+- Outdated code (pull latest changes)
 
 ### Issue: Database Connection Failed
 
